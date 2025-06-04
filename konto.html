@@ -39,6 +39,19 @@
       margin-right: 15px;
       font-size: 14px;
     }
+    .logout-btn {
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
+    }
     .container {
       max-width: 800px;
       margin: 20px auto;
@@ -47,6 +60,12 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding-bottom: 40px;
+    }
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
     h2.section-title {
       color: #4CAF50;
@@ -150,6 +169,13 @@
   </header>
 
   <div class="container">
+    <div class="header-actions">
+      <div>
+        <span id="user-greeting-top" style="font-size: 16px; font-weight: bold;"></span>
+      </div>
+      <button id="logout-button" class="logout-btn">Wyloguj</button>
+    </div>
+
     <h2 class="section-title">Mój Profil</h2>
     <!-- Formularz danych kontaktowych -->
     <form id="profile-form">
@@ -196,7 +222,6 @@
     </form>
   </div>
 
-  <!-- Firebase SDK + logika zarządzania profilem i zwierzakami -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import {
@@ -208,7 +233,6 @@
       getFirestore,
       doc,
       getDoc,
-      setDoc,
       updateDoc,
       collection,
       addDoc,
@@ -235,27 +259,29 @@
     // ------------------------------------------------------------
     // 2. Pobranie elementów DOM
     // ------------------------------------------------------------
-    const linkRejestracja = document.getElementById('nav-rejestracja');
-    const linkLogowanie   = document.getElementById('nav-logowanie');
-    const linkKonto       = document.getElementById('nav-konto');
-    const userGreeting    = document.getElementById('user-greeting');
+    const linkRejestracja    = document.getElementById('nav-rejestracja');
+    const linkLogowanie      = document.getElementById('nav-logowanie');
+    const linkKonto          = document.getElementById('nav-konto');
+    const userGreeting       = document.getElementById('user-greeting');
+    const userGreetingTop    = document.getElementById('user-greeting-top');
+    const logoutButton       = document.getElementById('logout-button');
 
-    const profileForm      = document.getElementById('profile-form');
-    const firstNameInput   = document.getElementById('firstName');
-    const lastNameInput    = document.getElementById('lastName');
-    const phoneInput       = document.getElementById('phone');
-    const addressInput     = document.getElementById('address');
-    const cityInput        = document.getElementById('city');
-    const profileSuccess   = document.getElementById('profile-success');
-    const profileError     = document.getElementById('profile-error');
+    const profileForm       = document.getElementById('profile-form');
+    const firstNameInput    = document.getElementById('firstName');
+    const lastNameInput     = document.getElementById('lastName');
+    const phoneInput        = document.getElementById('phone');
+    const addressInput      = document.getElementById('address');
+    const cityInput         = document.getElementById('city');
+    const profileSuccess    = document.getElementById('profile-success');
+    const profileError      = document.getElementById('profile-error');
 
-    const petsList         = document.getElementById('pets-list');
-    const addPetForm       = document.getElementById('add-pet-form');
-    const petNameInput     = document.getElementById('petName');
-    const petSpeciesInput  = document.getElementById('petSpecies');
-    const petAgeInput      = document.getElementById('petAge');
-    const petSuccess       = document.getElementById('pet-success');
-    const petError         = document.getElementById('pet-error');
+    const petsList          = document.getElementById('pets-list');
+    const addPetForm        = document.getElementById('add-pet-form');
+    const petNameInput      = document.getElementById('petName');
+    const petSpeciesInput   = document.getElementById('petSpecies');
+    const petAgeInput       = document.getElementById('petAge');
+    const petSuccess        = document.getElementById('pet-success');
+    const petError          = document.getElementById('pet-error');
 
     let currentUserUid = null;
 
@@ -270,22 +296,33 @@
       }
       // Użytkownik jest zalogowany
       currentUserUid = user.uid;
-      // Ustawiamy powitanie w nagłówku
+
+      // Ustawiamy powitanie w nagłówku i przycisk Logout
       userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
+      userGreetingTop.textContent = `Witaj, ${user.email}`;
+
       // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
       linkLogowanie.style.display   = 'none';
-      // Pokażemy „Moje Konto” (ale jesteśmy już na tej stronie)
+      // Pokażemy „Moje Konto”
       linkKonto.style.display       = 'inline-block';
 
-      // Teraz wczytamy dane profilu i zwierzaków
+      // Wczytaj dane profilu i zwierzaków
       await loadUserProfile();
       await loadUserPets();
     });
 
     // ------------------------------------------------------------
-    // 4. Funkcja wczytująca dane kontaktowe użytkownika z Firestore
+    // 4. Obsługa wylogowania
+    // ------------------------------------------------------------
+    logoutButton.addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+
+    // ------------------------------------------------------------
+    // 5. Wczytanie danych kontaktowych użytkownika z Firestore
     // ------------------------------------------------------------
     async function loadUserProfile() {
       try {
@@ -293,7 +330,6 @@
         const userSnap   = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
-          // Wypełniamy pola tekstowe (jeśli są zapisane)
           firstNameInput.value = data.firstName || "";
           lastNameInput.value  = data.lastName  || "";
           phoneInput.value     = data.phone     || "";
@@ -306,7 +342,7 @@
     }
 
     // ------------------------------------------------------------
-    // 5. Obsługa zapisu/aktualizacji danych kontaktowych
+    // 6. Obsługa zapisu/aktualizacji danych kontaktowych
     // ------------------------------------------------------------
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -322,7 +358,6 @@
         city:      cityInput.value.trim()
       };
       try {
-        // Aktualizacja – zachowujemy istniejące pola (email, role, created) i dodajemy nowe
         await updateDoc(profileRef, profileData);
         profileSuccess.style.display = 'block';
       } catch (err) {
@@ -332,10 +367,10 @@
     });
 
     // ------------------------------------------------------------
-    // 6. Wczytywanie listy zwierzaków i wyświetlanie
+    // 7. Wczytywanie listy zwierzaków
     // ------------------------------------------------------------
     async function loadUserPets() {
-      petsList.innerHTML = ""; // Czyścimy listę
+      petsList.innerHTML = "";
       try {
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         const petsSnapshot = await getDocs(petsColRef);
@@ -361,7 +396,7 @@
     }
 
     // ------------------------------------------------------------
-    // 7. Obsługa dodawania nowego zwierzaka
+    // 8. Obsługa dodawania nowego zwierzaka
     // ------------------------------------------------------------
     addPetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -376,7 +411,6 @@
       try {
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         await addDoc(petsColRef, newPet);
-        // Po dodaniu odśwież listę
         await loadUserPets();
         petSuccess.style.display = 'block';
         addPetForm.reset();
@@ -387,7 +421,7 @@
     });
 
     // ------------------------------------------------------------
-    // 8. Usuwanie zwierzaka
+    // 9. Usuwanie zwierzaka
     // ------------------------------------------------------------
     async function deletePet(petId) {
       try {
@@ -398,7 +432,6 @@
         console.error("Błąd przy usuwaniu zwierzaka:", err);
       }
     }
-
   </script>
 </body>
 </html>
