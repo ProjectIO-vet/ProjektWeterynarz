@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rejestracja | BKRJ Vet</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      color: #333;
+    }
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 10px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .error {
+      margin-top: 12px;
+      color: #d8000c;
+      background: #ffd2d2;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      margin-top: 12px;
+      color: #4F8A10;
+      background: #DFF2BF;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    .link {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .link a {
+      color: #4CAF50;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Rejestracja Pacjenta</h2>
+
+    <form id="register-form">
+      <label for="email">Email:</label>
+      <input type="email" id="email" required autocomplete="email" />
+
+      <label for="password">Hasło:</label>
+      <input type="password" id="password" required autocomplete="new-password" minlength="6" />
+
+      <button type="submit">Zarejestruj się</button>
+    </form>
+
+    <div id="error-message" class="error"></div>
+    <div id="success-message" class="success"></div>
+
+    <div class="link">
+      <a href="index.html">Powrót do strony głównej</a>
+    </div>
+  </div>
+
+  <!-- 1. Załaduj moduły Firebase (wersja 9+) z CDN -->
+  <script type="module">
+    // Importujemy tylko to, czego będziemy używać:
+    import { initializeApp } 
+      from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc 
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // 2. Konfiguracja Firebase (skopiowana z konsoli)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+
+    // 3. Inicjalizacja Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 4. Złapiemy elementy DOM
+    const registerForm   = document.getElementById('register-form');
+    const errorMessage   = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    // 5. Obsługa zdarzenia SUBMIT formularza
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Pobieramy wartości z inputów
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Resetuj komunikaty
+      errorMessage.style.display   = 'none';
+      successMessage.style.display = 'none';
+      errorMessage.textContent     = '';
+      successMessage.textContent   = '';
+
+      try {
+        // a) Tworzymy konto w Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user; // obiekt użytkownika
+        const uid  = user.uid;
+
+        // b) Po pomyślnym utworzeniu konta ⇒ zapisujemy w Firestore profil użytkownika
+        //    Nadpisujemy (lub tworzymy) dokument w kolekcji "users" o ID = uid
+        await setDoc(doc(db, "users", uid), {
+          uid:      uid,
+          email:    email,
+          role:     "pacjent",     // domyślnie PACJENT
+          created:  new Date().toISOString()
+        });
+
+        // c) Jeśli wszystko się udało, pokaż komunikat o sukcesie
+        successMessage.textContent = "Rejestracja powiodła się! Możesz się teraz zalogować.";
+        successMessage.style.display = 'block';
+
+        // Opcjonalnie: wyczyść formularz
+        registerForm.reset();
+
+      } catch (error) {
+        // Obsługa błędów (np. niepoprawny e-mail, słabe hasło, istnienie konta)
+        console.error("Błąd podczas rejestracji:", error);
+        let msg = "Wystąpił nieoczekiwany błąd.";
+
+        // Rozbijmy kilka typowych kodów na czytelne komunikaty:
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            msg = "Ten adres e-mail jest już zarejestrowany.";
+            break;
+          case "auth/invalid-email":
+            msg = "Adres e-mail jest nieprawidłowy.";
+            break;
+          case "auth/weak-password":
+            msg = "Hasło jest za krótkie (minimum 6 znaków).";
+            break;
+          case "auth/operation-not-allowed":
+            msg = "Rejestracja została wyłączona w konsoli Firebase.";
+            break;
+          default:
+            msg = error.message;
+        }
+
+        errorMessage.textContent = msg;
+        errorMessage.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
