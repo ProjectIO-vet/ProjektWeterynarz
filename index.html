@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BKRJ Vet - Klinika Weterynaryjna</title>
   <style>
     body {
@@ -75,15 +75,19 @@
   </style>
 </head>
 <body>
+
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
-      <nav>
+      <nav id="nav-bar">
+        <!-- Nadajemy id, aby skrypt JS mógł to ukrywać/pokazywać -->
         <a href="index.html">Strona główna</a>
-        <a href="rejestracja.html">Rejestracja</a>
-        <a href="login.html">Logowanie</a>
+        <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
         <a href="#about">O nas</a>
         <a href="#contact">Kontakt</a>
+        <!-- „Moje Konto” zaczynamy od display: none; zostanie pokazane po zalogowaniu -->
+        <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
       </nav>
     </div>
   </header>
@@ -133,5 +137,55 @@
       </div>
     </div>
   </footer>
+
+  <!-- ================================
+       1. Załaduj moduły Firebase (wersja 9+) z CDN
+       2. Dodaj kod JS, który przy starcie strony sprawdzi,
+          czy jest zalogowany użytkownik, i odpowiednio zmodyfikuje menu
+       ================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+    // ------------------------------------------------------------
+    // 1. Twoja konfiguracja Firebase – wklej dokładnie ten blok
+    // ------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    // Inicjalizacja Firebase
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ------------------------------------------------------------
+    // 2. Funkcja, która w zależności od stanu zalogowania
+    //    pokazuje/ukrywa odpowiednie elementy nawigacji
+    // ------------------------------------------------------------
+    onAuthStateChanged(auth, (user) => {
+      const linkRejestracja = document.getElementById('nav-rejestracja');
+      const linkLogowanie   = document.getElementById('nav-logowanie');
+      const linkKonto       = document.getElementById('nav-konto');
+
+      if (user) {
+        // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
+        linkRejestracja.style.display = 'none';
+        linkLogowanie.style.display   = 'none';
+        // Pokaż „Moje Konto”
+        linkKonto.style.display = 'inline-block';
+      } else {
+        // Użytkownik wylogowany → pokazujemy Rejestrację i Logowanie
+        linkRejestracja.style.display = 'inline-block';
+        linkLogowanie.style.display   = 'inline-block';
+        // Ukrywamy „Moje Konto”
+        linkKonto.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
