@@ -132,6 +132,7 @@
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
     };
+
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
@@ -149,12 +150,14 @@
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
+        // Po zalogowaniu przekieruj na stronę główną:
         window.location.href = "index.html";
       } catch (error) {
-        let msg = "Wystąpił błąd przy logowaniu.";
+        // Przyjazne komunikaty błędów
+        let msg;
         switch (error.code) {
           case "auth/user-not-found":
-            msg = "Użytkownik o tym adresie e-mail nie istnieje.";
+            msg = "Konto o tym adresie e-mail nie istnieje.";
             break;
           case "auth/wrong-password":
             msg = "Niepoprawne hasło.";
@@ -165,8 +168,12 @@
           case "auth/user-disabled":
             msg = "To konto zostało zablokowane.";
             break;
+          case "auth/invalid-login-credentials":
+            msg = "Niepoprawny e-mail lub hasło.";
+            break;
           default:
-            msg = error.message;
+            // Domyślnie: nie ujawniamy surowego komunikatu Firebase
+            msg = "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.";
         }
         errorMessage.textContent = msg;
         errorMessage.style.display = 'block';
