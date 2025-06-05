@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Umów wizytę – BKRJ Vet</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Umów wizytę – Wybór terminu</title>
+
+  <!-- Flatpickr CSS (graficzny kalendarz) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+
   <style>
     body {
       margin: 0;
@@ -11,7 +18,7 @@
       line-height: 1.6;
     }
     header {
-      background: #4CAF50;
+      background: #4caf50;
       color: #fff;
       padding: 20px 0;
     }
@@ -32,38 +39,55 @@
     .navbar a:hover {
       text-decoration: underline;
     }
+
     .container {
       max-width: 800px;
       margin: 40px auto;
       padding: 0 20px;
     }
     h2 {
-      color: #4CAF50;
+      color: #4caf50;
       margin-bottom: 20px;
       text-align: center;
     }
-    .locations-list {
-      list-style: none;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+
+    .date-picker-container {
+      text-align: center;
+      margin-bottom: 30px;
     }
-    .locations-list li {
+    #datePicker {
+      font-size: 1rem;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 200px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .timeslots-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+    .timeslot-button {
+      padding: 10px;
       background: #f4f4f4;
-      padding: 15px 20px;
-      border-radius: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
       transition: background 0.2s ease;
     }
-    .locations-list li:hover {
+    .timeslot-button:hover {
       background: #e0e0e0;
     }
-    .locations-list a {
-      text-decoration: none;
-      color: #333;
-      font-weight: bold;
-      display: block;
+    .timeslot-button.selected {
+      background: #4caf50;
+      color: #fff;
+      border-color: #388e3c;
     }
+
     footer {
       background: #f4f4f4;
       padding: 20px 0;
@@ -80,7 +104,6 @@
   </style>
 </head>
 <body>
-
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
@@ -97,19 +120,20 @@
   </header>
 
   <div class="container">
-    <h2>Wybierz lokal</h2>
-    <ul class="locations-list">
-      <li>
-        <a href="umow-wizyte-lokal.html?lokal=1">
-          Lokal 1: Warszawa Centrum
-        </a>
-      </li>
-      <li>
-        <a href="umow-wizyte-lokal.html?lokal=2">
-          Lokal 2: Warszawa Praga
-        </a>
-      </li>
-    </ul>
+    <h2 id="lokal-title">Wybierz termin wizyty</h2>
+
+    <div class="date-picker-container">
+      <input
+        type="text"
+        id="datePicker"
+        placeholder="Wybierz datę"
+        readonly
+      />
+    </div>
+
+    <div id="timeslots" class="timeslots-container">
+      <!-- Tutaj zostaną wygenerowane przyciski z godzinami -->
+    </div>
   </div>
 
   <footer>
@@ -126,15 +150,16 @@
     </div>
   </footer>
 
-  <!-- ================================
-       Firebase + Autoryzacja
-       ================================= -->
+  <!-- Flatpickr JS (graficzny kalendarz) -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- Firebase + Autoryzacja -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
     // ------------------------------------------------------------
-    // Konfiguracja Firebase (ta sama, co w index.html)
+    // Konfiguracja Firebase (ta sama, co w index.html i umow-wizyte.html)
     // ------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -149,19 +174,101 @@
     const auth = getAuth(app);
 
     onAuthStateChanged(auth, (user) => {
-      const linkRejestracja = document.getElementById('nav-rejestracja');
-      const linkLogowanie   = document.getElementById('nav-logowanie');
-      const linkKonto       = document.getElementById('nav-konto');
+      const linkRejestracja = document.getElementById("nav-rejestracja");
+      const linkLogowanie = document.getElementById("nav-logowanie");
+      const linkKonto = document.getElementById("nav-konto");
 
       if (user) {
-        // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
-        linkRejestracja.style.display = 'none';
-        linkLogowanie.style.display   = 'none';
-        linkKonto.style.display       = 'inline-block';
-        // Pozostań na stronie umów wizytę
+        // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie, pokazujemy „Moje Konto”
+        linkRejestracja.style.display = "none";
+        linkLogowanie.style.display = "none";
+        linkKonto.style.display = "inline-block";
       } else {
         // Użytkownik nie jest zalogowany → przekieruj na logowanie
-        window.location.href = 'login.html';
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+
+  <!-- Skrypt do obsługi wyboru daty i generowania godzin -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Odczyt parametru "lokal" z URL
+      const params = new URLSearchParams(window.location.search);
+      const lokalParam = params.get("lokal");
+      const lokalTitleEl = document.getElementById("lokal-title");
+      let lokalName = "";
+
+      if (lokalParam === "1") {
+        lokalName = "Warszawa Centrum";
+      } else if (lokalParam === "2") {
+        lokalName = "Warszawa Praga";
+      } else {
+        lokalName = "Nieznany lokal";
+      }
+
+      lokalTitleEl.textContent = `Wybierz termin wizyty – ${lokalName}`;
+
+      // 2. Inicjalizacja Flatpickr na polu #datePicker
+      const datePicker = flatpickr("#datePicker", {
+        dateFormat: "d-m-Y",
+        minDate: "today",
+        onChange: function (selectedDates, dateStr) {
+          if (dateStr) {
+            generateTimeSlots(dateStr);
+          }
+        },
+      });
+
+      // 3. Funkcja generująca przyciski z godzinami co 20 minut (8:00–17:40)
+      function generateTimeSlots(dateStr) {
+        // Czyścimy poprzednie przyciski
+        const container = document.getElementById("timeslots");
+        container.innerHTML = "";
+
+        // Godziny rejestracji w klinice: od 8:00 do 18:00
+        // Tworzymy interwały co 20 minut (ostatni start: 17:40)
+        const startHour = 8;
+        const endHour = 18; // koniec pracy
+        const intervalMinutes = 20;
+
+        let slots = [];
+        for (let h = startHour; h < endHour; h++) {
+          for (
+            let m = 0;
+            m < 60;
+            m += intervalMinutes
+          ) {
+            // Jeżeli godzina h = 17 i m = 40, to slot jest 17:40 → kończy się 18:00
+            if (h === endHour - 1 && m > 40) break;
+            const hourStr = String(h).padStart(2, "0");
+            const minStr = String(m).padStart(2, "0");
+            slots.push(`${hourStr}:${minStr}`);
+          }
+        }
+
+        // Tworzymy przyciski
+        slots.forEach((time) => {
+          const btn = document.createElement("div");
+          btn.classList.add("timeslot-button");
+          btn.textContent = time;
+          btn.dataset.time = time;
+          btn.addEventListener("click", () => {
+            // Odznaczamy inne przyciski
+            document
+              .querySelectorAll(".timeslot-button.selected")
+              .forEach((el) => el.classList.remove("selected"));
+
+            // Zaznaczamy wybrany
+            btn.classList.add("selected");
+
+            // Tu można dodać dalszą logikę (np. zapamiętać w pamięci lub przejście do kolejnego kroku)
+            console.log(
+              `Wybrano: Lokal ${lokalParam}, data: ${dateStr}, godzina: ${time}`
+            );
+          });
+          container.appendChild(btn);
+        });
       }
     });
   </script>
