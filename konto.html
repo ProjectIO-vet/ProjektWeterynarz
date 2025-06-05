@@ -85,13 +85,15 @@
     input[type="text"],
     input[type="tel"],
     input[type="email"],
-    input[type="number"] {
+    input[type="number"],
+    select {
       width: 100%;
       padding: 8px 10px;
       margin-top: 6px;
       border: 1px solid #ccc;
       border-radius: 4px;
       box-sizing: border-box;
+      font-size: 1rem;
     }
     button {
       margin-top: 20px;
@@ -158,9 +160,9 @@
       <div class="logo"><h1>BKRJ Vet</h1></div>
       <nav id="nav-bar">
         <a href="index.html">Strona główna</a>
-         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
+        <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
         <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
-        <a href="login.html"       id="nav-logowanie">Logowanie</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
         <a href="#about">O nas</a>
         <a href="#contact">Kontakt</a>
         <span id="user-greeting" class="user-greeting" style="display: none;"></span>
@@ -212,7 +214,26 @@
       <input type="text" id="petName" placeholder="Wpisz imię zwierzaka" required />
 
       <label for="petSpecies">Gatunek:</label>
-      <input type="text" id="petSpecies" placeholder="np. pies, kot, królik" required />
+      <select id="petSpecies" required>
+        <option value="" disabled selected>Wybierz gatunek</option>
+        <option value="Pies">Pies</option>
+        <option value="Kot">Kot</option>
+        <option value="Chomik szczękacz">Chomik szczękacz</option>
+        <option value="Królik ninja">Królik ninja</option>
+        <option value="Papuga rozrabiara">Papuga rozrabiara</option>
+        <option value="Koza skoczek">Koza skoczek</option>
+        <option value="Jeż jeżyk">Jeż jeżyk</option>
+        <option value="Wąż boa">Wąż boa</option>
+        <option value="Krokodyl egipski">Krokodyl egipski</option>
+      </select>
+
+      <label for="petSize">Rozmiar zwierzaka:</label>
+      <select id="petSize" required>
+        <option value="" disabled selected>Wybierz rozmiar</option>
+        <option value="Mały">Mały</option>
+        <option value="Średni">Średni</option>
+        <option value="Duży">Duży</option>
+      </select>
 
       <label for="petAge">Wiek (w latach):</label>
       <input type="number" id="petAge" min="0" step="1" placeholder="Wpisz wiek" required />
@@ -279,7 +300,8 @@
     const petsList          = document.getElementById('pets-list');
     const addPetForm        = document.getElementById('add-pet-form');
     const petNameInput      = document.getElementById('petName');
-    const petSpeciesInput   = document.getElementById('petSpecies');
+    const petSpeciesSelect  = document.getElementById('petSpecies');
+    const petSizeSelect     = document.getElementById('petSize');
     const petAgeInput       = document.getElementById('petAge');
     const petSuccess        = document.getElementById('pet-success');
     const petError          = document.getElementById('pet-error');
@@ -380,7 +402,8 @@
           const li = document.createElement("li");
 
           const infoSpan = document.createElement("span");
-          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
+          // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
+          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
 
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "Usuń";
@@ -404,11 +427,15 @@
       petSuccess.style.display = 'none';
       petError.style.display   = 'none';
 
+      const species = petSpeciesSelect.value;
+      const size = petSizeSelect.value;
       const newPet = {
         name:     petNameInput.value.trim(),
-        species:  petSpeciesInput.value.trim(),
+        species:  species,
+        size:     size,
         age:      parseInt(petAgeInput.value, 10)
       };
+
       try {
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         await addDoc(petsColRef, newPet);
