@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Umów wizytę | BKRJ Vet</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Umów wizytę – BKRJ Vet</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       line-height: 1.6;
-      background: #f7f7f7;
-      color: #333;
     }
     header {
       background: #4CAF50;
@@ -34,49 +32,55 @@
     .navbar a:hover {
       text-decoration: underline;
     }
-    .user-greeting {
-      color: #fff;
-      margin-right: 15px;
-      font-size: 14px;
-    }
     .container {
       max-width: 800px;
-      margin: 20px auto;
+      margin: 40px auto;
       padding: 0 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding-bottom: 40px;
     }
-    h2.section-title {
+    h2 {
       color: #4CAF50;
-      margin-top: 30px;
       margin-bottom: 20px;
       text-align: center;
     }
-    .locations {
+    .locations-list {
+      list-style: none;
+      padding: 0;
       display: flex;
-      justify-content: space-around;
-      margin-top: 20px;
+      flex-direction: column;
+      gap: 15px;
     }
-    .locations button {
-      width: 45%;
-      padding: 15px;
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.2s;
+    .locations-list li {
+      background: #f4f4f4;
+      padding: 15px 20px;
+      border-radius: 5px;
+      transition: background 0.2s ease;
     }
-    .locations button:hover {
-      background: #45a049;
+    .locations-list li:hover {
+      background: #e0e0e0;
+    }
+    .locations-list a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      display: block;
+    }
+    footer {
+      background: #f4f4f4;
+      padding: 20px 0;
+      margin-top: 60px;
+    }
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    footer p {
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
-  <!-- Nagłówek z nawigacją -->
+
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
@@ -84,28 +88,53 @@
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
         <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
-        <a href="login.html"       id="nav-logowanie">Logowanie</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
         <a href="#about">O nas</a>
         <a href="#contact">Kontakt</a>
-        <span id="user-greeting" class="user-greeting" style="display: none;"></span>
-        <a href="konto.html"       id="nav-konto" style="display: none;">Moje Konto</a>
+        <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
       </nav>
     </div>
   </header>
 
   <div class="container">
-    <h2 class="section-title">Wybierz lokalizację</h2>
-    <div class="locations">
-      <button id="lokal1">Lokal Centrum</button>
-      <button id="lokal2">Lokal Praga</button>
-    </div>
+    <h2>Wybierz lokal</h2>
+    <ul class="locations-list">
+      <li>
+        <a href="umow-wizyte-lokal.html?lokal=1">
+          Lokal 1: Warszawa Centrum
+        </a>
+      </li>
+      <li>
+        <a href="umow-wizyte-lokal.html?lokal=2">
+          Lokal 2: Warszawa Praga
+        </a>
+      </li>
+    </ul>
   </div>
 
+  <footer>
+    <div class="container">
+      <div>
+        <p>&copy; 2025 BKRJ Vet. Wszelkie prawa zastrzeżone.</p>
+      </div>
+      <div>
+        <p>Godziny otwarcia:</p>
+        <p>Poniedziałek – Piątek: 8:00 – 18:00</p>
+        <p>Sobota: 9:00 – 14:00</p>
+        <p>Niedziela: Nieczynne</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================================
+       Firebase + Autoryzacja
+       ================================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
     // ------------------------------------------------------------
-    // Konfiguracja Firebase (skopiuj dokładnie z konsoli)
+    // Konfiguracja Firebase (ta sama, co w index.html)
     // ------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -116,56 +145,24 @@
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
     };
-    const app  = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // ------------------------------------------------------------
-    // Pobranie elementów DOM
-    // ------------------------------------------------------------
-    const linkRejestracja = document.getElementById('nav-rejestracja');
-    const linkLogowanie   = document.getElementById('nav-logowanie');
-    const linkKonto       = document.getElementById('nav-konto');
-    const linkUmow        = document.getElementById('nav-umow');
-    const userGreeting    = document.getElementById('user-greeting');
-    const lokal1Btn       = document.getElementById('lokal1');
-    const lokal2Btn       = document.getElementById('lokal2');
-
-    let currentUserUid = null;
-
-    // ------------------------------------------------------------
-    // Sprawdzenie stanu autoryzacji
-    // ------------------------------------------------------------
     onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        // Jeśli użytkownik nie jest zalogowany, przekieruj na logowanie
-        window.location.href = "login.html";
-        return;
+      const linkRejestracja = document.getElementById('nav-rejestracja');
+      const linkLogowanie   = document.getElementById('nav-logowanie');
+      const linkKonto       = document.getElementById('nav-konto');
+
+      if (user) {
+        // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
+        linkRejestracja.style.display = 'none';
+        linkLogowanie.style.display   = 'none';
+        linkKonto.style.display       = 'inline-block';
+        // Pozostań na stronie umów wizytę
+      } else {
+        // Użytkownik nie jest zalogowany → przekieruj na logowanie
+        window.location.href = 'login.html';
       }
-      // Użytkownik jest zalogowany
-      currentUserUid = user.uid;
-      // Pokaż e-mail w nagłówku
-      userGreeting.textContent = `Witaj, ${user.email}`;
-      userGreeting.style.display = 'inline-block';
-      // Ukryj Rejestracja i Logowanie
-      linkRejestracja.style.display = 'none';
-      linkLogowanie.style.display   = 'none';
-      // Pokaż „Moje Konto”
-      linkKonto.style.display       = 'inline-block';
-    });
-
-    // ------------------------------------------------------------
-    // Obsługa wyboru lokalizacji
-    // ------------------------------------------------------------
-    lokal1Btn.addEventListener('click', () => {
-      // Na razie przekierowanie placeholder
-      // W kolejnym kroku można utworzyć np. wizytę w tym lokalu
-      alert("Wybrano: Lokal Centrum");
-      // Przykładowo: window.location.href = "umow-wizyte-lokal.html?lokal=centrum";
-    });
-
-    lokal2Btn.addEventListener('click', () => {
-      alert("Wybrano: Lokal Praga");
-      // Przykładowo: window.location.href = "umow-wizyte-lokal.html?lokal=praga";
     });
   </script>
 </body>
