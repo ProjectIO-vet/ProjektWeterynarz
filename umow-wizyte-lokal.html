@@ -245,8 +245,6 @@
     import {
       getFirestore,
       collection,
-      query,
-      where,
       getDocs
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
@@ -288,16 +286,15 @@
       }
     });
 
-    // Funkcja pobierająca zwierzaki z Firestore
+    // Funkcja pobierająca zwierzaki z Firestore (subkolekcja "pets" wewnątrz dokumentu użytkownika)
     async function loadPets(uid) {
       const petSelect = document.getElementById("pet-select");
       petSelect.innerHTML = ""; // wyczyść wstępny stan
 
       try {
-        // Zakładamy, że w Firestore jest kolekcja "pets" ze strukturą { name, species, ownerId }
-        const petsRef = collection(db, "pets");
-        const q = query(petsRef, where("ownerId", "==", uid));
-        const querySnapshot = await getDocs(q);
+        // Ścieżka: /users/{uid}/pets
+        const petsRef = collection(db, "users", uid, "pets");
+        const querySnapshot = await getDocs(petsRef);
 
         if (querySnapshot.empty) {
           // Jeżeli brak zwierzaków, pokaż tylko placeholder
@@ -308,7 +305,7 @@
           noPetsOption.selected = true;
           petSelect.appendChild(noPetsOption);
         } else {
-          // Dodaj placeholder
+          // Dodaj placeholder do wyboru
           const placeholder = document.createElement("option");
           placeholder.value = "";
           placeholder.textContent = "Wybierz zwierzaka";
@@ -322,7 +319,7 @@
             const option = document.createElement("option");
             option.value = doc.id;
             option.textContent = `${petData.name} (${petData.species})`;
-            option.dataset.species = petData.species;
+            option.dataset.species = petData.species.toLowerCase();
             petSelect.appendChild(option);
           });
         }
@@ -369,7 +366,7 @@
         },
       });
 
-      // Tablica przykładowych lekarzy z obsługiwanymi gatunkami
+      // Przykładowa tablica lekarzy z obsługiwanymi gatunkami (można w przyszłości pobierać dynamicznie)
       const doctors = [
         { id: "d1", name: "dr Kowalski", species: ["pies", "kot"] },
         { id: "d2", name: "dr Nowak", species: ["ptak", "gryzoń"] },
@@ -381,7 +378,6 @@
       const doctorSelect = document.getElementById("doctor-select");
 
       petSelect.addEventListener("change", () => {
-        const selectedPetId = petSelect.value;
         const selectedOption = petSelect.selectedOptions[0];
         const species = selectedOption.dataset.species;
 
@@ -407,12 +403,9 @@
 
       // 4. Funkcja generująca przyciski z godzinami co 20 minut (8:00–17:40)
       function generateTimeSlots(dateStr) {
-        // Czyścimy poprzednie przyciski
         const container = document.getElementById("timeslots");
         container.innerHTML = "";
 
-        // Godziny rejestracji w klinice: od 8:00 do 18:00
-        // Tworzymy interwały co 20 minut (ostatni start: 17:40)
         const startHour = 8;
         const endHour = 18; // koniec pracy
         const intervalMinutes = 20;
@@ -420,7 +413,6 @@
         let slots = [];
         for (let h = startHour; h < endHour; h++) {
           for (let m = 0; m < 60; m += intervalMinutes) {
-            // Jeśli godzina h=17 i m=40, to slot 17:40 → kończy się 18:00
             if (h === endHour - 1 && m > 40) break;
             const hourStr = String(h).padStart(2, "0");
             const minStr = String(m).padStart(2, "0");
@@ -428,7 +420,6 @@
           }
         }
 
-        // Tworzymy przyciski
         slots.forEach((time) => {
           const btn = document.createElement("div");
           btn.classList.add("timeslot-button");
