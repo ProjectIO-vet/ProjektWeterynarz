@@ -191,7 +191,7 @@
       <!-- 1. Wybór zwierzaka -->
       <label for="pet-select">Wybierz zwierzaka</label>
       <select id="pet-select">
-        <!-- Opcje będą wygenerowane dynamicznie -->
+        <option value="" disabled selected>Ładowanie zwierzaków...</option>
       </select>
       <div class="note">
         Jeśli nie masz jeszcze dodanego zwierzaka, <a href="konto.html#dodaj-zwierzaka">dodaj go w Moje Konto</a>.
@@ -200,7 +200,6 @@
       <!-- 2. Rodzaj wizyty -->
       <label for="visit-type">Rodzaj wizyty</label>
       <select id="visit-type">
-        <!-- Przykładowe typy wizyt z atrybutem data-duration (w minutach) -->
         <option value="" disabled selected>Wybierz rodzaj wizyty</option>
         <option value="kontrola" data-duration="20">Kontrola (20 min)</option>
         <option value="szczepienie" data-duration="30">Szczepienie (30 min)</option>
@@ -211,7 +210,6 @@
       <label for="doctor-select">Wybierz lekarza</label>
       <select id="doctor-select">
         <option value="" disabled selected>Wybierz lekarza</option>
-        <!-- Opcje będą filtrowane na podstawie gatunku wybranego zwierzaka -->
       </select>
       <div class="note">
         Lista lekarzy pokazuje tylko tych, którzy zajmują się wybranym gatunkiem.
@@ -240,10 +238,17 @@
   <!-- Flatpickr JS (graficzny kalendarz) -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-  <!-- Firebase + Autoryzacja -->
+  <!-- Firebase + Autoryzacja + Firestore -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     // ------------------------------------------------------------
     // Konfiguracja Firebase (taka sama, jak w pozostałych plikach)
@@ -259,8 +264,11 @@
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    onAuthStateChanged(auth, (user) => {
+    let currentUserUid = "";
+
+    onAuthStateChanged(auth, async (user) => {
       const linkRejestracja = document.getElementById("nav-rejestracja");
       const linkLogowanie = document.getElementById("nav-logowanie");
       const linkKonto = document.getElementById("nav-konto");
@@ -270,12 +278,65 @@
         linkRejestracja.style.display = "none";
         linkLogowanie.style.display = "none";
         linkKonto.style.display = "inline-block";
-        // TODO: pobierz listę zwierzaków użytkownika z bazy i ustaw w pet-select
+
+        // Zapisujemy UID i ładujemy listę zwierzaków
+        currentUserUid = user.uid;
+        await loadPets(currentUserUid);
       } else {
         // Użytkownik nie jest zalogowany → przekieruj na logowanie
         window.location.href = "login.html";
       }
     });
+
+    // Funkcja pobierająca zwierzaki z Firestore
+    async function loadPets(uid) {
+      const petSelect = document.getElementById("pet-select");
+      petSelect.innerHTML = ""; // wyczyść wstępny stan
+
+      try {
+        // Zakładamy, że w Firestore jest kolekcja "pets" ze strukturą { name, species, ownerId }
+        const petsRef = collection(db, "pets");
+        const q = query(petsRef, where("ownerId", "==", uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          // Jeżeli brak zwierzaków, pokaż tylko placeholder
+          const noPetsOption = document.createElement("option");
+          noPetsOption.value = "";
+          noPetsOption.textContent = "Brak dodanych zwierzaków";
+          noPetsOption.disabled = true;
+          noPetsOption.selected = true;
+          petSelect.appendChild(noPetsOption);
+        } else {
+          // Dodaj placeholder
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Wybierz zwierzaka";
+          placeholder.disabled = true;
+          placeholder.selected = true;
+          petSelect.appendChild(placeholder);
+
+          // Dodaj każdy pobrany zwierzak
+          querySnapshot.forEach((doc) => {
+            const petData = doc.data();
+            const option = document.createElement("option");
+            option.value = doc.id;
+            option.textContent = `${petData.name} (${petData.species})`;
+            option.dataset.species = petData.species;
+            petSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error("Błąd podczas ładowania zwierzaków:", error);
+        petSelect.innerHTML = "";
+        const errorOption = document.createElement("option");
+        errorOption.value = "";
+        errorOption.textContent = "Błąd ładowania zwierzaków";
+        errorOption.disabled = true;
+        errorOption.selected = true;
+        petSelect.appendChild(errorOption);
+      }
+    }
   </script>
 
   <!-- Skrypt do obsługi wyboru daty, godzin i szczegółów wizyty -->
@@ -298,7 +359,7 @@
       lokalTitleEl.textContent = `Wybierz termin wizyty – ${lokalName}`;
 
       // 2. Inicjalizacja Flatpickr na polu #datePicker
-      const datePicker = flatpickr("#datePicker", {
+      flatpickr("#datePicker", {
         dateFormat: "d-m-Y",
         minDate: "today",
         onChange: function (selectedDates, dateStr) {
@@ -308,13 +369,6 @@
         },
       });
 
-      // Tablica przykładowych zwierzaków (w praktyce pobrać z Firebase)
-      const pets = [
-        { id: "p1", name: "Azor", species: "pies" },
-        { id: "p2", name: "Mruczek", species: "kot" },
-        { id: "p3", name: "Burek", species: "pies" }
-      ];
-
       // Tablica przykładowych lekarzy z obsługiwanymi gatunkami
       const doctors = [
         { id: "d1", name: "dr Kowalski", species: ["pies", "kot"] },
@@ -322,45 +376,12 @@
         { id: "d3", name: "dr Wiśniewski", species: ["pies"] }
       ];
 
-      // 3. Wypełnienie listy zwierzaków po załadowaniu (lub później po pobraniu z bazy)
+      // 3. Obsługa zmiany wyboru zwierzaka (filtracja lekarzy)
       const petSelect = document.getElementById("pet-select");
-      function populatePetSelect() {
-        // Najpierw czyścimy wszystkie opcje
-        petSelect.innerHTML = "";
-
-        // Dodajemy placeholder
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Wybierz zwierzaka";
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        petSelect.appendChild(placeholder);
-
-        pets.forEach((pet) => {
-          const option = document.createElement("option");
-          option.value = pet.id;
-          option.textContent = `${pet.name} (${pet.species})`;
-          option.dataset.species = pet.species;
-          petSelect.appendChild(option);
-        });
-
-        // Opcja dodania nowego zwierzaka w razie potrzeby
-        const addOption = document.createElement("option");
-        addOption.value = "new";
-        addOption.textContent = "Dodaj nowego zwierzaka";
-        petSelect.appendChild(addOption);
-      }
-      populatePetSelect();
-
-      // 4. Obsługa zmiany wyboru zwierzaka (filtracja lekarzy)
       const doctorSelect = document.getElementById("doctor-select");
+
       petSelect.addEventListener("change", () => {
         const selectedPetId = petSelect.value;
-        // Jeżeli użytkownik wybrał "Dodaj nowego zwierzaka"
-        if (selectedPetId === "new") {
-          window.location.href = "konto.html#dodaj-zwierzaka";
-          return;
-        }
         const selectedOption = petSelect.selectedOptions[0];
         const species = selectedOption.dataset.species;
 
@@ -384,7 +405,7 @@
         });
       });
 
-      // 5. Funkcja generująca przyciski z godzinami co 20 minut (8:00–17:40)
+      // 4. Funkcja generująca przyciski z godzinami co 20 minut (8:00–17:40)
       function generateTimeSlots(dateStr) {
         // Czyścimy poprzednie przyciski
         const container = document.getElementById("timeslots");
@@ -399,7 +420,7 @@
         let slots = [];
         for (let h = startHour; h < endHour; h++) {
           for (let m = 0; m < 60; m += intervalMinutes) {
-            // Jeżeli godzina h=17 i m=40, to slot 17:40 → kończy się 18:00
+            // Jeśli godzina h=17 i m=40, to slot 17:40 → kończy się 18:00
             if (h === endHour - 1 && m > 40) break;
             const hourStr = String(h).padStart(2, "0");
             const minStr = String(m).padStart(2, "0");
@@ -425,32 +446,28 @@
             // Pokazujemy sekcję z danymi do wypełnienia
             document.getElementById("booking-details").style.display = "block";
 
-            // Przechowujemy wybraną datę i godzinę w zmiennych globalnych lub ukrytym polu
+            // Przechowujemy wybraną datę i godzinę
             selectedDate = dateStr;
             selectedTime = time;
-
-            // Ustawiamy pole notki, by użytkownik wiedział wybraną datę i czas
-            // (można dodać tu np. `<div>Wybrano: ${dateStr} ${time}</div>`)
           });
           container.appendChild(btn);
         });
       }
 
-      // 6. Obsługa potwierdzenia wizyty
+      // 5. Obsługa potwierdzenia wizyty
       const confirmButton = document.getElementById("confirm-appointment");
-      confirmButton.addEventListener("click", () => {
+      confirmButton.addEventListener("click", async () => {
         const petId = petSelect.value;
         const visitTypeSelect = document.getElementById("visit-type");
         const visitType = visitTypeSelect.value;
         const duration = visitTypeSelect.selectedOptions[0]?.dataset.duration;
         const doctorId = doctorSelect.value;
 
-        if (!petId || petId === "" || !visitType || !doctorId) {
+        if (!petId || !visitType || !doctorId) {
           alert("Proszę uzupełnić wszystkie pola.");
           return;
         }
 
-        // Przykładowe złożenie danych rezerwacji
         const appointmentData = {
           lokal: lokalParam,
           date: selectedDate,
@@ -458,19 +475,16 @@
           petId: petId,
           visitType: visitType,
           duration: parseInt(duration, 10),
-          doctorId: doctorId
+          doctorId: doctorId,
+          userId: currentUserUid
         };
 
         console.log("Dane rezerwacji:", appointmentData);
 
-        // TODO: Tutaj wyślij appointmentData do Firebase (lub innego backendu),
-        // aby zapisać wizytę w bazie i zarezerwować dany slot.
-        // Po pomyślnym zapisie można przekierować użytkownika na stronę podsumowania,
-        // np. window.location.href = "podsumowanie.html?appointmentId=...";
+        // TODO: Wyślij appointmentData do Firestore (kolekcja "appointments")
+        // Po pomyślnym zapisie możesz przekierować użytkownika do strony z potwierdzeniem
 
-        alert("Wizyta została zarejestrowana!"); 
-        // Możesz zamiast alertu przekierować np.:
-        // window.location.href = "podsumowanie.html";
+        alert("Wizyta została zarejestrowana!");
       });
 
       // Zmienne do przechowywania wybranej daty i godziny
