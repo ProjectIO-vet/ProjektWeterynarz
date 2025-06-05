@@ -1,16 +1,9 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Umów wizytę – Wybór terminu</title>
-
-  <!-- Flatpickr CSS (graficzny kalendarz) -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-  />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BKRJ Vet – Umów wizytę</title>
   <style>
     body {
       margin: 0;
@@ -18,7 +11,7 @@
       line-height: 1.6;
     }
     header {
-      background: #4caf50;
+      background: #4CAF50;
       color: #fff;
       padding: 20px 0;
     }
@@ -46,46 +39,31 @@
       padding: 0 20px;
     }
     h2 {
-      color: #4caf50;
+      color: #4CAF50;
       margin-bottom: 20px;
       text-align: center;
     }
-
-    .date-picker-container {
-      text-align: center;
-      margin-bottom: 30px;
+    .locations-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
-    #datePicker {
-      font-size: 1rem;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 200px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    .timeslots-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
-    }
-    .timeslot-button {
-      padding: 10px;
+    .locations-list li {
       background: #f4f4f4;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: center;
+      padding: 15px 20px;
+      border-radius: 5px;
       transition: background 0.2s ease;
     }
-    .timeslot-button:hover {
+    .locations-list li:hover {
       background: #e0e0e0;
     }
-    .timeslot-button.selected {
-      background: #4caf50;
-      color: #fff;
-      border-color: #388e3c;
+    .locations-list a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      display: block;
     }
 
     footer {
@@ -104,6 +82,7 @@
   </style>
 </head>
 <body>
+
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
@@ -120,20 +99,19 @@
   </header>
 
   <div class="container">
-    <h2 id="lokal-title">Wybierz termin wizyty</h2>
-
-    <div class="date-picker-container">
-      <input
-        type="text"
-        id="datePicker"
-        placeholder="Wybierz datę"
-        readonly
-      />
-    </div>
-
-    <div id="timeslots" class="timeslots-container">
-      <!-- Tutaj zostaną wygenerowane przyciski z godzinami -->
-    </div>
+    <h2>Wybierz lokal</h2>
+    <ul class="locations-list">
+      <li>
+        <a href="umow-wizyte-lokal.html?lokal=1">
+          Lokal 1: Warszawa Centrum
+        </a>
+      </li>
+      <li>
+        <a href="umow-wizyte-lokal.html?lokal=2">
+          Lokal 2: Warszawa Praga
+        </a>
+      </li>
+    </ul>
   </div>
 
   <footer>
@@ -143,15 +121,12 @@
       </div>
       <div>
         <p>Godziny otwarcia:</p>
-        <p>Poniedziałek – Piątek: 8:00 – 18:00</p>
-        <p>Sobota: 9:00 – 14:00</p>
+        <p>Poniedziałek – Piątek: 8:00 – 18:00</p>
+        <p>Sobota: 9:00 – 14:00</p>
         <p>Niedziela: Nieczynne</p>
       </div>
     </div>
   </footer>
-
-  <!-- Flatpickr JS (graficzny kalendarz) -->
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <!-- Firebase + Autoryzacja -->
   <script type="module">
@@ -159,7 +134,7 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
     // ------------------------------------------------------------
-    // Konfiguracja Firebase (ta sama, co w index.html i umow-wizyte.html)
+    // Konfiguracja Firebase (taka sama jak w index.html)
     // ------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -186,89 +161,6 @@
       } else {
         // Użytkownik nie jest zalogowany → przekieruj na logowanie
         window.location.href = "login.html";
-      }
-    });
-  </script>
-
-  <!-- Skrypt do obsługi wyboru daty i generowania godzin -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // 1. Odczyt parametru "lokal" z URL
-      const params = new URLSearchParams(window.location.search);
-      const lokalParam = params.get("lokal");
-      const lokalTitleEl = document.getElementById("lokal-title");
-      let lokalName = "";
-
-      if (lokalParam === "1") {
-        lokalName = "Warszawa Centrum";
-      } else if (lokalParam === "2") {
-        lokalName = "Warszawa Praga";
-      } else {
-        lokalName = "Nieznany lokal";
-      }
-
-      lokalTitleEl.textContent = `Wybierz termin wizyty – ${lokalName}`;
-
-      // 2. Inicjalizacja Flatpickr na polu #datePicker
-      const datePicker = flatpickr("#datePicker", {
-        dateFormat: "d-m-Y",
-        minDate: "today",
-        onChange: function (selectedDates, dateStr) {
-          if (dateStr) {
-            generateTimeSlots(dateStr);
-          }
-        },
-      });
-
-      // 3. Funkcja generująca przyciski z godzinami co 20 minut (8:00–17:40)
-      function generateTimeSlots(dateStr) {
-        // Czyścimy poprzednie przyciski
-        const container = document.getElementById("timeslots");
-        container.innerHTML = "";
-
-        // Godziny rejestracji w klinice: od 8:00 do 18:00
-        // Tworzymy interwały co 20 minut (ostatni start: 17:40)
-        const startHour = 8;
-        const endHour = 18; // koniec pracy
-        const intervalMinutes = 20;
-
-        let slots = [];
-        for (let h = startHour; h < endHour; h++) {
-          for (
-            let m = 0;
-            m < 60;
-            m += intervalMinutes
-          ) {
-            // Jeżeli godzina h = 17 i m = 40, to slot jest 17:40 → kończy się 18:00
-            if (h === endHour - 1 && m > 40) break;
-            const hourStr = String(h).padStart(2, "0");
-            const minStr = String(m).padStart(2, "0");
-            slots.push(`${hourStr}:${minStr}`);
-          }
-        }
-
-        // Tworzymy przyciski
-        slots.forEach((time) => {
-          const btn = document.createElement("div");
-          btn.classList.add("timeslot-button");
-          btn.textContent = time;
-          btn.dataset.time = time;
-          btn.addEventListener("click", () => {
-            // Odznaczamy inne przyciski
-            document
-              .querySelectorAll(".timeslot-button.selected")
-              .forEach((el) => el.classList.remove("selected"));
-
-            // Zaznaczamy wybrany
-            btn.classList.add("selected");
-
-            // Tu można dodać dalszą logikę (np. zapamiętać w pamięci lub przejście do kolejnego kroku)
-            console.log(
-              `Wybrano: Lokal ${lokalParam}, data: ${dateStr}, godzina: ${time}`
-            );
-          });
-          container.appendChild(btn);
-        });
       }
     });
   </script>
