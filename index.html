@@ -60,9 +60,21 @@
       color: #4CAF50;
       margin-bottom: 10px;
     }
-    .button{
-      color: #4CAF50;
-    }
+    .button {
+  background-color: #ff0000; /* Czerwony kolor tła */
+  color: white;             /* Biały tekst dla lepszej czytelności */
+  border: none;             /* Usunięcie domyślnej ramki */
+  border-radius: 20px;      /* Zaokrąglenie rogów (im większa wartość, tym bardziej okrągły) */
+  padding: 10px 20px;       /* Wewnętrzny odstęp (góra/dół i lewo/prawo) */
+  cursor: pointer;          /* Zmiana kursora na wskaźnik przy najechaniu */
+}
+    .button:hover {
+  background-color: #cc0000; /* Ciemniejszy czerwony przy najechaniu */
+}
+
+.button:active {
+  background-color: #990000; /* Jeszcze ciemniejszy po kliknięciu */
+}
     footer {
       background: #f4f4f4;
       padding: 20px 0;
