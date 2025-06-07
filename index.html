@@ -211,9 +211,15 @@
     });
 
     logoutButton.addEventListener('click', async () => {
+    try {
       await signOut(auth);
+      alert('Zostałeś pomyślnie wylogowany!');
       window.location.href = "index.html";
-    });
+    } catch (error) {
+      console.error('Błąd wylogowania:', error);
+      alert('Wystąpił błąd podczas wylogowania. Spróbuj ponownie.');
+  }
+});
     
   </script>
 </body>
