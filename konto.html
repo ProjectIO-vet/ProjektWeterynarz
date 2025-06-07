@@ -344,9 +344,15 @@
     // 4. Obsługa wylogowania
     // ------------------------------------------------------------
     logoutButton.addEventListener('click', async () => {
+    try {
       await signOut(auth);
+      alert('Zostałeś pomyślnie wylogowany!');
       window.location.href = "index.html";
-    });
+    } catch (error) {
+      console.error('Błąd wylogowania:', error);
+      alert('Wystąpił błąd podczas wylogowania. Spróbuj ponownie.');
+  }
+});
 
     // ------------------------------------------------------------
     // 5. Wczytanie danych kontaktowych użytkownika z Firestore
