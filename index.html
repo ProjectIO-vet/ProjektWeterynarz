@@ -180,7 +180,7 @@
     // Inicjalizacja Firebase
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const logoutButton       = document.getElementById('logout-button');
+    const logoutButton = document.getElementById('logout-button');
 
     // ------------------------------------------------------------
     // 2. Funkcja, która w zależności od stanu zalogowania
@@ -195,12 +195,16 @@
         // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
         linkRejestracja.style.display = 'none';
         linkLogowanie.style.display   = 'none';
+        // pokazywanie przysicku "wyloguj"
+        logoutButton.style.display = 'inline-block';
         // Pokaż „Moje Konto”
         linkKonto.style.display = 'inline-block';
       } else {
         // Użytkownik wylogowany → pokazujemy Rejestrację i Logowanie
         linkRejestracja.style.display = 'inline-block';
         linkLogowanie.style.display   = 'inline-block';
+        // ukrywanie przyciksu "wyloguj"
+        logoutButton.style.display = 'none';
         // Ukrywamy „Moje Konto”
         linkKonto.style.display = 'none';
       }
