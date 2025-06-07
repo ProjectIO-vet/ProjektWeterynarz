@@ -321,9 +321,9 @@
       currentUserUid = user.uid;
 
       // Ustawiamy powitanie w nagłówku i przycisk Logout
-      userGreeting.textContent = Witaj, ${user.email};
+      userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
-      userGreetingTop.textContent = Witaj, ${user.email};
+      userGreetingTop.textContent = `Witaj, ${user.email}`;
 
       // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
@@ -403,7 +403,7 @@
 
           const infoSpan = document.createElement("span");
           // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
-          infoSpan.textContent = ${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"};
+          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
 
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "Usuń";
