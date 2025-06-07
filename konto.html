@@ -387,8 +387,8 @@ document.addEventListener('DOMContentLoaded', showNotification);
 logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
-    showNotification('Zostałeś pomyślnie wylogowany!');
-    window.location.href = "index.html";
+    // Przekieruj na stronę główną z parametrem w URL
+    window.location.href = "index.html?logout=success";
   } catch (error) {
     console.error('Błąd wylogowania:', error);
     showNotification('Wystąpił błąd podczas wylogowania', true);
