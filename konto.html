@@ -12,32 +12,6 @@
       background: #f7f7f7;
       color: #333;
     }
-    /* Dodaj te style w sekcji <style> */
-  .notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 25px;
-    border-radius: 5px;
-    color: white;
-    background-color: #4CAF50;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    z-index: 1000;
-    transition: all 0.5s ease;
-    opacity: 0;
-    transform: translateY(-100px);
-    visibility: hidden;
-  }
-  
-  .notification.show {
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible;
-  }
-  
-  .notification.error {
-    background-color: #d9534f;
-  }
     header {
       background: #4CAF50;
       color: #fff;
@@ -66,20 +40,17 @@
       font-size: 14px;
     }
     .logout-btn {
-      background-color: #d9534f;
-      color: white;
+      background: #d9534f;
+      color: #fff;
       border: none;
-      border-radius: 20px;
-      margin-left: 15px;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
-      padding: 12px 24px;
-      font-size: 16px;
+      font-size: 14px;
+      margin-left: 10px;
     }
-    
     .logout-btn:hover {
-      background-color: #c9302c;
+      background: #c9302c;
     }
     .container {
       max-width: 800px;
@@ -183,9 +154,6 @@
   </style>
 </head>
 <body>
-  <div id="notification" class="notification">
-  <span id="notification-message"></span>
-  </div>
   <!-- Nagłówek taki sam jak na stronie głównej -->
   <header>
     <div class="navbar">
@@ -193,16 +161,23 @@
       <nav id="nav-bar">
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
-        <a href="index.html#about">O nas</a>
-        <a href="index.html#contact">Kontakt</a>
+        <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
+        <a href="#about">O nas</a>
+        <a href="#contact">Kontakt</a>
         <span id="user-greeting" class="user-greeting" style="display: none;"></span>
         <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
-        <button id="logout-button" class="logout-btn" style="margin: 0; padding: 6px 12px;">Wyloguj</button>
       </nav>
     </div>
   </header>
 
   <div class="container">
+    <div class="header-actions">
+      <div>
+        <span id="user-greeting-top" style="font-size: 16px; font-weight: bold;"></span>
+      </div>
+      <button id="logout-button" class="logout-btn">Wyloguj</button>
+    </div>
 
     <h2 class="section-title">Mój Profil</h2>
     <!-- Formularz danych kontaktowych -->
@@ -306,9 +281,11 @@
     // ------------------------------------------------------------
     // 2. Pobranie elementów DOM
     // ------------------------------------------------------------
+    const linkRejestracja    = document.getElementById('nav-rejestracja');
+    const linkLogowanie      = document.getElementById('nav-logowanie');
     const linkKonto          = document.getElementById('nav-konto');
     const userGreeting       = document.getElementById('user-greeting');
-    // const userGreetingTop    = document.getElementById('user-greeting-top');
+    const userGreetingTop    = document.getElementById('user-greeting-top');
     const logoutButton       = document.getElementById('logout-button');
 
     const profileForm       = document.getElementById('profile-form');
@@ -344,9 +321,9 @@
       currentUserUid = user.uid;
 
       // Ustawiamy powitanie w nagłówku i przycisk Logout
-      userGreeting.textContent = `Witaj, ${user.email}`;
+      userGreeting.textContent = Witaj, ${user.email};
       userGreeting.style.display = 'inline-block';
-      // userGreetingTop.textContent = `Witaj, ${user.email}`;
+      userGreetingTop.textContent = Witaj, ${user.email};
 
       // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
@@ -362,18 +339,10 @@
     // ------------------------------------------------------------
     // 4. Obsługa wylogowania
     // ------------------------------------------------------------
-
-// Wywołaj funkcję po załadowaniu strony
-logoutButton.addEventListener('click', async () => {
-  try {
-    await signOut(auth);
-    // Przekieruj na stronę główną z parametrem w URL
-    window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false";
-  } catch (error) {
-    console.error('Błąd wylogowania:', error);
-    window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
-  }
-});
+    logoutButton.addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
 
     // ------------------------------------------------------------
     // 5. Wczytanie danych kontaktowych użytkownika z Firestore
@@ -434,7 +403,7 @@ logoutButton.addEventListener('click', async () => {
 
           const infoSpan = document.createElement("span");
           // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
-          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
+          infoSpan.textContent = ${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"};
 
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "Usuń";
