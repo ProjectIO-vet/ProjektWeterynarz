@@ -318,8 +318,8 @@
         return;
       }
       // Użytkownik jest zalogowany
-      currentUserUid = user.uid;
-
+      currentUserUid = sessionStorage.getItem('uid');
+      
       // Ustawiamy powitanie w nagłówku i przycisk Logout
       userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
