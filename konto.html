@@ -193,8 +193,8 @@
       <nav id="nav-bar">
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
-        <a href="index.html#about">O nas</a>
-        <a href="index.html#contact">Kontakt</a>
+        <a href="#about">O nas</a>
+        <a href="#contact">Kontakt</a>
         <span id="user-greeting" class="user-greeting" style="display: none;"></span>
         <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
         <button id="logout-button" class="logout-btn" style="margin: 0; padding: 6px 12px;">Wyloguj</button>
@@ -364,16 +364,27 @@
     // ------------------------------------------------------------
     // 4. Obsługa wylogowania
     // ------------------------------------------------------------
+    function showNotification(message, isError = false) {
+  const notification = document.getElementById('notification');
+  const messageElement = document.getElementById('notification-message');
+  
+  notification.className = isError ? 'notification error' : 'notification';
+  messageElement.textContent = message;
+  notification.classList.add('show');
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
 
-// Wywołaj funkcję po załadowaniu strony
 logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
-    // Przekieruj na stronę główną z parametrem w URL
-    window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false";
+    window.location.href = "index.html";
+    showNotification('Zostałeś pomyślnie wylogowany!');
   } catch (error) {
     console.error('Błąd wylogowania:', error);
-    window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
+    showNotification('Wystąpił błąd podczas wylogowania', true);
   }
 });
 
