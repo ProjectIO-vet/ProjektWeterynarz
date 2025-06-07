@@ -265,8 +265,8 @@
         
         // Usuń parametr z URL (np. 'notification' lub 'error')
         const url = new URL(window.location.href);
-        url.searchParams.delete('notification'); // lub inna nazwa parametru
-        url.searchParams.delete('error'); // jeśli używasz parametru błędu
+        url.searchParams.delete('notification');
+        url.searchParams.delete('isError');
         window.history.replaceState({}, '', url);
     }, 2000);
     
