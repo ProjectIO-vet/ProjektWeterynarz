@@ -12,31 +12,32 @@
       background: #f7f7f7;
       color: #333;
     }
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 25px;
-      border-radius: 5px;
-      color: white;
-      background-color: #4CAF50;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      z-index: 1000;
-      transition: all 0.5s ease;
-      opacity: 0;
-      transform: translateY(-100px);
-      visibility: hidden;
-    }
-    
-    .notification.show {
-      opacity: 1;
-      transform: translateY(0);
-      visibility: visible;
-    }
-    
-    .notification.error {
-      background-color: #d9534f;
-    }
+    /* Dodaj te style w sekcji <style> */
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 5px;
+    color: white;
+    background-color: #4CAF50;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: all 0.5s ease;
+    opacity: 0;
+    transform: translateY(-100px);
+    visibility: hidden;
+  }
+  
+  .notification.show {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+  
+  .notification.error {
+    background-color: #d9534f;
+  }
     header {
       background: #4CAF50;
       color: #fff;
@@ -183,9 +184,9 @@
 </head>
 <body>
   <div id="notification" class="notification">
-    <span id="notification-message"></span>
+  <span id="notification-message"></span>
   </div>
-  
+  <!-- Nagłówek taki sam jak na stronie głównej -->
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
@@ -202,7 +203,9 @@
   </header>
 
   <div class="container">
+
     <h2 class="section-title">Mój Profil</h2>
+    <!-- Formularz danych kontaktowych -->
     <form id="profile-form">
       <label for="firstName">Imię:</label>
       <input type="text" id="firstName" placeholder="Wpisz swoje imię" required />
@@ -225,10 +228,12 @@
     </form>
 
     <h2 class="section-title">Moje Zwierzaki</h2>
+    <!-- Lista zwierzaków użytkownika -->
     <ul id="pets-list" class="pets-list">
       <!-- Tutaj będą wstawiane elementy listy -->
     </ul>
 
+    <!-- Formularz dodawania nowego zwierzaka -->
     <form id="add-pet-form">
       <label for="petName">Imię zwierzaka:</label>
       <input type="text" id="petName" placeholder="Wpisz imię zwierzaka" required />
@@ -282,11 +287,14 @@
       deleteDoc
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+    // ------------------------------------------------------------
+    // 1. Konfiguracja Firebase (skopiuj dokładnie z konsoli)
+    // ------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
       projectId: "bkrj-vet",
-      storageBucket: "bkrj-vet.appspot.com",
+      storageBucket: "bkrj-vet.firebasestorage.app",
       messagingSenderId: "289704325759",
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
@@ -295,6 +303,9 @@
     const auth  = getAuth(app);
     const db    = getFirestore(app);
 
+    // ------------------------------------------------------------
+    // 2. Pobranie elementów DOM
+    // ------------------------------------------------------------
     const linkRejestracja    = document.getElementById('nav-rejestracja');
     const linkLogowanie      = document.getElementById('nav-logowanie');
     const linkKonto          = document.getElementById('nav-konto');
@@ -322,60 +333,64 @@
 
     let currentUserUid = null;
 
-    // Funkcja do wyświetlania powiadomień
-    window.showNotification = function(message, isError = false) {
-      const notification = document.getElementById('notification');
-      const messageElement = document.getElementById('notification-message');
-      
-      notification.className = isError ? 'notification error' : 'notification';
-      messageElement.textContent = message;
-      notification.classList.add('show');
-      
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 3000);
-    }
-
+    // ------------------------------------------------------------
+    // 3. Sprawdzamy stan autoryzacji – jeśli nie zalogowany, przekieruj
+    // ------------------------------------------------------------
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        // Jeśli nikt nie jest zalogowany, przekieruj na stronę główną
         window.location.href = "index.html";
         return;
       }
-      
+      // Użytkownik jest zalogowany
       currentUserUid = user.uid;
+
+      // Ustawiamy powitanie w nagłówku i przycisk Logout
       userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
       userGreetingTop.textContent = `Witaj, ${user.email}`;
+
+      // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
       linkLogowanie.style.display   = 'none';
+      // Pokażemy „Moje Konto”
       linkKonto.style.display       = 'inline-block';
 
+      // Wczytaj dane profilu i zwierzaków
       await loadUserProfile();
       await loadUserPets();
-      
-      // Sprawdź parametry URL po załadowaniu strony
-      const urlParams = new URLSearchParams(window.location.search);
-      const notificationMessage = urlParams.get('notification');
-      const isError = urlParams.get('isError') === 'true';
-      
-      if (notificationMessage) {
-        showNotification(decodeURIComponent(notificationMessage), isError);
-        // Usuń parametry z URL, aby nie pokazywać powiadomienia przy odświeżeniu
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
     });
 
-    logoutButton.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-        // Przekieruj z parametrami
-        window.location.href = "index.html?notification=Zostałeś%20pomyślnie%20wylogowany!&isError=false";
-      } catch (error) {
-        console.error('Błąd wylogowania:', error);
-        window.location.href = "index.html?notification=Wystąpił%20błąd%20podczas%20wylogowania&isError=true";
-      }
-    });
+    // ------------------------------------------------------------
+    // 4. Obsługa wylogowania
+    // ------------------------------------------------------------
+    function showNotification(message, isError = false) {
+  const notification = document.getElementById('notification');
+  const messageElement = document.getElementById('notification-message');
+  
+  notification.className = isError ? 'notification error' : 'notification';
+  messageElement.textContent = message;
+  notification.classList.add('show');
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
 
+logoutButton.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "index.html";
+    showNotification('Zostałeś pomyślnie wylogowany!');
+  } catch (error) {
+    console.error('Błąd wylogowania:', error);
+    showNotification('Wystąpił błąd podczas wylogowania', true);
+  }
+});
+
+    // ------------------------------------------------------------
+    // 5. Wczytanie danych kontaktowych użytkownika z Firestore
+    // ------------------------------------------------------------
     async function loadUserProfile() {
       try {
         const userDocRef = doc(db, "users", currentUserUid);
@@ -393,6 +408,9 @@
       }
     }
 
+    // ------------------------------------------------------------
+    // 6. Obsługa zapisu/aktualizacji danych kontaktowych
+    // ------------------------------------------------------------
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       profileSuccess.style.display = 'none';
@@ -408,13 +426,16 @@
       };
       try {
         await updateDoc(profileRef, profileData);
-        showNotification("Dane kontaktowe zapisane pomyślnie!");
+        profileSuccess.style.display = 'block';
       } catch (err) {
         console.error("Błąd przy zapisie profilu:", err);
-        showNotification("Wystąpił błąd podczas zapisu danych", true);
+        profileError.style.display = 'block';
       }
     });
 
+    // ------------------------------------------------------------
+    // 7. Wczytywanie listy zwierzaków
+    // ------------------------------------------------------------
     async function loadUserPets() {
       petsList.innerHTML = "";
       try {
@@ -425,6 +446,7 @@
           const li = document.createElement("li");
 
           const infoSpan = document.createElement("span");
+          // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
           infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
 
           const deleteBtn = document.createElement("button");
@@ -441,6 +463,9 @@
       }
     }
 
+    // ------------------------------------------------------------
+    // 8. Obsługa dodawania nowego zwierzaka
+    // ------------------------------------------------------------
     addPetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       petSuccess.style.display = 'none';
@@ -459,23 +484,24 @@
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         await addDoc(petsColRef, newPet);
         await loadUserPets();
-        showNotification("Zwierzak dodany pomyślnie!");
+        petSuccess.style.display = 'block';
         addPetForm.reset();
       } catch (err) {
         console.error("Błąd przy dodawaniu zwierzaka:", err);
-        showNotification("Wystąpił błąd podczas dodawania zwierzaka", true);
+        petError.style.display = 'block';
       }
     });
 
+    // ------------------------------------------------------------
+    // 9. Usuwanie zwierzaka
+    // ------------------------------------------------------------
     async function deletePet(petId) {
       try {
         const petDocRef = doc(db, "users", currentUserUid, "pets", petId);
         await deleteDoc(petDocRef);
         await loadUserPets();
-        showNotification("Zwierzak został usunięty");
       } catch (err) {
         console.error("Błąd przy usuwaniu zwierzaka:", err);
-        showNotification("Wystąpił błąd podczas usuwania zwierzaka", true);
       }
     }
   </script>
