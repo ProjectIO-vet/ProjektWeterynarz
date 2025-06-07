@@ -234,7 +234,7 @@
     });
 
      // ------------------------------------------------------------
-    // 3. Funkcja wylogownia
+    // 3. Funkcja powiadomienia
     // ------------------------------------------------------------
 
     function showNotification() {
@@ -258,6 +258,10 @@
 // Wywołaj funkcję po załadowaniu strony
 document.addEventListener('DOMContentLoaded', showNotification);
 
+        // ------------------------------------------------------------
+    // 3. Funkcja wylogowania
+    // ------------------------------------------------------------
+    
     logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
