@@ -244,6 +244,7 @@
     </form>
   </div>
 
+ 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import {
@@ -339,10 +340,18 @@
     // ------------------------------------------------------------
     // 4. Obsługa wylogowania
     // ------------------------------------------------------------
-    logoutButton.addEventListener('click', async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
-    });
+
+// Wywołaj funkcję po załadowaniu strony
+logoutButton.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    // Przekieruj na stronę główną z parametrem w URL
+    window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false";
+  } catch (error) {
+    console.error('Błąd wylogowania:', error);
+    window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
+  }
+});
 
     // ------------------------------------------------------------
     // 5. Wczytanie danych kontaktowych użytkownika z Firestore
@@ -463,3 +472,4 @@
   </script>
 </body>
 </html>
+
