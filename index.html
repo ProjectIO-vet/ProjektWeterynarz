@@ -259,11 +259,8 @@
     notificationDiv.style.display = 'block';
     notificationDiv.className = isError ? 'notification error' : 'notification success';
     
-    // Automatyczne ukrywanie powiadomienia po 5 sekundach
      setTimeout(() => {
         notificationDiv.style.display = 'none';
-        
-        // Usuń parametr z URL (np. 'notification' lub 'error')
         const url = new URL(window.location.href);
         url.searchParams.delete('notification');
         url.searchParams.delete('isError');
