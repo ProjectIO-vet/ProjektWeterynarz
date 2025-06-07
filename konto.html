@@ -161,8 +161,10 @@
       <nav id="nav-bar">
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
-        <a href="index.html#about">O nas</a>
-        <a href="index.html#contact">Kontakt</a>
+        <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
+        <a href="#about">O nas</a>
+        <a href="#contact">Kontakt</a>
         <span id="user-greeting" class="user-greeting" style="display: none;"></span>
         <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
       </nav>
@@ -319,9 +321,9 @@
       currentUserUid = user.uid;
 
       // Ustawiamy powitanie w nagłówku i przycisk Logout
-      userGreeting.textContent = `Witaj, ${user.email}`;
+      userGreeting.textContent = Witaj, ${user.email};
       userGreeting.style.display = 'inline-block';
-      userGreetingTop.textContent = `Witaj, ${user.email}`;
+      userGreetingTop.textContent = Witaj, ${user.email};
 
       // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
@@ -401,7 +403,7 @@
 
           const infoSpan = document.createElement("span");
           // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
-          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
+          infoSpan.textContent = ${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"};
 
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "Usuń";
