@@ -180,6 +180,7 @@
     // Inicjalizacja Firebase
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const logoutButton       = document.getElementById('logout-button');
 
     // ------------------------------------------------------------
     // 2. Funkcja, która w zależności od stanu zalogowania
