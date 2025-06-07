@@ -172,10 +172,10 @@
           created:  new Date().toISOString()
         });
 
-        window.location.href = 'index.html';
         // c) Jeśli wszystko się udało, pokaż komunikat o sukcesie
-        successMessage.textContent = "Rejestracja powiodła się! Możesz się teraz zalogować.";
+        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
         successMessage.style.display = 'block';
+        window.location.href = 'index.html';
 
         // Opcjonalnie: wyczyść formularz
         registerForm.reset();
