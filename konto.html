@@ -370,7 +370,7 @@ logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
     // Przekieruj na stronę główną z parametrem w URL
-    index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false
+     window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=fals
   } catch (error) {
     console.error('Błąd wylogowania:', error);
     window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
