@@ -165,6 +165,8 @@
 
         // b) Po pomyślnym utworzeniu konta ⇒ zapisujemy w Firestore profil użytkownika
         //    Nadpisujemy (lub tworzymy) dokument w kolekcji "users" o ID = uid
+        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
+        successMessage.style.display = 'block';
         await setDoc(doc(db, "users", uid), {
           uid:      uid,
           email:    email,
@@ -173,8 +175,6 @@
         });
 
         // c) Jeśli wszystko się udało, pokaż komunikat o sukcesie
-        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
-        successMessage.style.display = 'block';
         window.location.href = 'index.html';
 
         // Opcjonalnie: wyczyść formularz
