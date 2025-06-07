@@ -158,6 +158,8 @@
       successMessage.textContent   = '';
 
       try {
+        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
+        successMessage.style.display = 'block';
         // a) Tworzymy konto w Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user; // obiekt użytkownika
@@ -165,8 +167,6 @@
 
         // b) Po pomyślnym utworzeniu konta ⇒ zapisujemy w Firestore profil użytkownika
         //    Nadpisujemy (lub tworzymy) dokument w kolekcji "users" o ID = uid
-        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
-        successMessage.style.display = 'block';
         await setDoc(doc(db, "users", uid), {
           uid:      uid,
           email:    email,
