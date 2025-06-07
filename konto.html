@@ -364,19 +364,26 @@
     // ------------------------------------------------------------
     // 4. Obsługa wylogowania
     // ------------------------------------------------------------
-    function showNotification(message, isError = false) {
-  const notification = document.getElementById('notification');
-  const messageElement = document.getElementById('notification-message');
+    function showNotification() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const notificationText = urlParams.get('notification');
+  const isError = urlParams.get('isError') === 'true';
   
-  notification.className = isError ? 'notification error' : 'notification';
-  messageElement.textContent = message;
-  notification.classList.add('show');
-  
-  setTimeout(() => {
-    notification.classList.remove('show');
-  }, 3000);
+  if (notificationText) {
+    const notificationDiv = document.getElementById('notification');
+    notificationDiv.textContent = decodeURIComponent(notificationText.replace(/\+/g, ' '));
+    notificationDiv.style.display = 'block';
+    notificationDiv.className = isError ? 'notification error' : 'notification success';
+    
+    // Automatyczne ukrywanie powiadomienia po 5 sekundach
+    setTimeout(() => {
+      notificationDiv.style.display = 'none';
+    }, 5000);
+  }
 }
 
+// Wywołaj funkcję po załadowaniu strony
+document.addEventListener('DOMContentLoaded', showNotification);
 logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
