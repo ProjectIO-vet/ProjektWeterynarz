@@ -380,10 +380,10 @@
 logoutButton.addEventListener('click', async () => {
   try {
     await signOut(auth);
-    showNotification('Zostałeś pomyślnie wylogowany!');
     setTimeout(() => {
       window.location.href = "index.html";
     }, 1000); // Małe opóźnienie aby użytkownik zobaczył powiadomienie
+    showNotification('Zostałeś pomyślnie wylogowany!');
   } catch (error) {
     console.error('Błąd wylogowania:', error);
     showNotification('Wystąpił błąd podczas wylogowania', true);
