@@ -5,6 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moje Konto | BKRJ Vet</title>
   <style>
+    button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+/* Specyficzny styl dla przycisku wylogowania */
+.logout-btn {
+  background: #d9534f;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-left: 10px;
+}
+
+.logout-btn:hover {
+  background: #c9302c;
+}
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -81,33 +108,6 @@
       border-radius: 4px;
       box-sizing: border-box;
       font-size: 1rem;
-    }
-     button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-
-     .logout-btn {
-      background: #d9534f;
-      color: #fff;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 18px;
-      margin-left: 10px;
-    }
-    .logout-btn:hover {
-      background: #c9302c;
     }
     .error, .success {
       margin-top: 12px;
