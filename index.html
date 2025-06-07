@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BKRJ Vet - Klinika Weterynaryjna</title>
   <style>
+    .notification {
+  padding: 15px;
+  margin: 0 auto;
+  max-width: 1200px;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.notification.success {
+  background-color: #dff0d8;
+  color: #3c763d;
+  border: 1px solid #d6e9c6;
+}
+
+.notification.error {
+  background-color: #f2dede;
+  color: #a94442;
+  border: 1px solid #ebccd1;
+}
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -60,6 +81,22 @@
       color: #4CAF50;
       margin-bottom: 10px;
     }
+    .logout-btn {
+      background-color: #d9534f;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      margin-left: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+      padding: 12px 24px;
+      font-size: 16px;
+    }
+    
+    .logout-btn:hover {
+      background-color: #c9302c;
+    }
     footer {
       background: #f4f4f4;
       padding: 20px 0;
@@ -77,6 +114,7 @@
 <body>
 
   <header>
+    <div id="notification" class="notification" style="display: none;"></div>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
       <nav id="nav-bar">
@@ -89,6 +127,7 @@
         <a href="#contact">Kontakt</a>
         <!-- „Moje Konto” zaczynamy od display: none; zostanie pokazane po zalogowaniu -->
         <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
+        <button id="logout-button" class="logout-btn" style="margin: 0; padding: 6px 12px;">Wyloguj</button>
       </nav>
     </div>
   </header>
@@ -145,8 +184,9 @@
           czy jest zalogowany użytkownik, i odpowiednio zmodyfikuje menu
        ================================= -->
   <script type="module">
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getAuth,signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
     // ------------------------------------------------------------
     // 1. Twoja konfiguracja Firebase – wklej dokładnie ten blok
@@ -163,6 +203,7 @@
     // Inicjalizacja Firebase
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const logoutButton = document.getElementById('logout-button');
 
     // ------------------------------------------------------------
     // 2. Funkcja, która w zależności od stanu zalogowania
@@ -177,16 +218,75 @@
         // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
         linkRejestracja.style.display = 'none';
         linkLogowanie.style.display   = 'none';
+        // pokazywanie przysicku "wyloguj"
+        logoutButton.style.display = 'inline-block';
         // Pokaż „Moje Konto”
         linkKonto.style.display = 'inline-block';
       } else {
         // Użytkownik wylogowany → pokazujemy Rejestrację i Logowanie
         linkRejestracja.style.display = 'inline-block';
         linkLogowanie.style.display   = 'inline-block';
+        // ukrywanie przyciksu "wyloguj"
+        logoutButton.style.display = 'none';
         // Ukrywamy „Moje Konto”
         linkKonto.style.display = 'none';
       }
     });
+
+     // ------------------------------------------------------------
+    // 3. Funkcja powiadomienia
+    // ------------------------------------------------------------
+  function checkUrlForNotifications() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const logoutStatus = urlParams.get('logout');
+  
+  if (logoutStatus === 'success') {
+    showNotification('Zostałeś pomyślnie wylogowany!', false);
+    
+    // Usuń parametr z URL bez przeładowania strony
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+    
+    function showNotification() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const notificationText = urlParams.get('notification');
+  const isError = urlParams.get('isError') === 'true';
+  
+  if (notificationText) {
+    const notificationDiv = document.getElementById('notification');
+    notificationDiv.textContent = decodeURIComponent(notificationText.replace(/\+/g, ' '));
+    notificationDiv.style.display = 'block';
+    notificationDiv.className = isError ? 'notification error' : 'notification success';
+    
+     setTimeout(() => {
+        notificationDiv.style.display = 'none';
+        const url = new URL(window.location.href);
+        url.searchParams.delete('notification');
+        url.searchParams.delete('isError');
+        window.history.replaceState({}, '', url);
+    }, 2000);
+    
+  }
+}
+
+// Wywołaj funkcję po załadowaniu strony
+document.addEventListener('DOMContentLoaded', showNotification);
+
+        // ------------------------------------------------------------
+    // 4. Funkcja wylogowania
+    // ------------------------------------------------------------
+    
+    logoutButton.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false";
+  } catch (error) {
+    console.error('Błąd wylogowania:', error);
+    window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
+  }
+});
+    
   </script>
 </body>
 </html>
