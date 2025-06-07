@@ -236,7 +236,18 @@
      // ------------------------------------------------------------
     // 3. Funkcja powiadomienia
     // ------------------------------------------------------------
-
+  function checkUrlForNotifications() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const logoutStatus = urlParams.get('logout');
+  
+  if (logoutStatus === 'success') {
+    showNotification('Zostałeś pomyślnie wylogowany!', false);
+    
+    // Usuń parametr z URL bez przeładowania strony
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+    
     function showNotification() {
   const urlParams = new URLSearchParams(window.location.search);
   const notificationText = urlParams.get('notification');
