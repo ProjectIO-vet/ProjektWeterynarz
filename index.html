@@ -91,26 +91,35 @@
       font-size: 16px;
       cursor: pointer;
     }
-    button:hover {
-      background: #45a049;
-    }
-      
-    .logout-btn {
-      background-color: #d9534f;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      margin-left: 15px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
-      padding: 12px 24px;
-      font-size: 16px;
-    }
-    
-    .logout-btn:hover {
-      background-color: #c9302c;
-    }
+   button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #4CAF50; /* Zielony domyślnie */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Styl czerwonego przycisku wylogowania */
+.logout-btn {
+  background-color: #d9534f !important; /* Czerwony */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  margin-left: 15px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+/* Ciemniejszy czerwony przy najechaniu */
+.logout-btn:hover {
+  background-color: #c9302c !important;
+}
     footer {
       background: #f4f4f4;
       padding: 20px 0;
