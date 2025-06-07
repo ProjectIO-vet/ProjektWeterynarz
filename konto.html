@@ -310,7 +310,7 @@
     const linkLogowanie      = document.getElementById('nav-logowanie');
     const linkKonto          = document.getElementById('nav-konto');
     const userGreeting       = document.getElementById('user-greeting');
-    const userGreetingTop    = document.getElementById('user-greeting-top');
+    // const userGreetingTop    = document.getElementById('user-greeting-top');
     const logoutButton       = document.getElementById('logout-button');
 
     const profileForm       = document.getElementById('profile-form');
@@ -348,7 +348,7 @@
       // Ustawiamy powitanie w nagłówku i przycisk Logout
       userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
-      userGreetingTop.textContent = `Witaj, ${user.email}`;
+      // userGreetingTop.textContent = `Witaj, ${user.email}`;
 
       // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
