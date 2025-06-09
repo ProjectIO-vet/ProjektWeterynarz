@@ -86,7 +86,7 @@
 
   <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- Firebase + Autoryzacja + Firestore -->
+  <!-- Jeden moduł zawierający Firebase, Flatpickr i całą logikę -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -102,6 +102,7 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+    // --- Inicjalizacja Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
@@ -113,16 +114,20 @@
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
     let currentUserUid = "";
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'login.html';
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
       currentUserUid = user.uid;
       await loadPets(currentUserUid);
       await loadDoctors();
     });
 
+    // --- Funkcje pomocnicze ---
     async function loadPets(uid) {
       const petSelect = document.getElementById('pet-select');
       petSelect.innerHTML = '<option disabled selected>Ładowanie zwierzaków...</option>';
@@ -138,13 +143,12 @@
             const opt = document.createElement('option');
             opt.value = docSnap.id;
             opt.textContent = `${d.name} (${d.species})`;
-            // dodatkowe atrybuty do późniejszego odczytu
-            opt.dataset.name = d.name;
+            opt.dataset.name    = d.name;
             opt.dataset.species = d.species;
             petSelect.append(opt);
           });
         }
-      } catch(e) {
+      } catch {
         petSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
       }
     }
@@ -154,34 +158,32 @@
       doctorSelect.innerHTML = '<option disabled selected>Ładowanie lekarzy...</option>';
       try {
         const q = query(collection(db, 'users'), where('role', '==', 'doctor'));
-        const docsSnap = await getDocs(q);
+        const snap = await getDocs(q);
         doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
-        docsSnap.forEach(docSnap => {
+        snap.forEach(docSnap => {
           const d = docSnap.data();
-          const fullName = d.firstName
-            ? `${d.firstName} ${d.lastName || ''}`.trim()
+          const name = d.firstName
+            ? `${d.firstName} ${d.lastName||''}`.trim()
             : d.email;
           const opt = document.createElement('option');
-          opt.value = docSnap.id;
-          opt.textContent = fullName;
-          // dodatkowe atrybuty
-          opt.dataset.name = fullName;
+          opt.value       = docSnap.id;
+          opt.textContent = name;
+          opt.dataset.name = name;
           doctorSelect.append(opt);
         });
-      } catch(e) {
+      } catch {
         doctorSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
       }
     }
-  </script>
 
-  <!-- Logika daty, godzin i rezerwacji -->
-  <script>
+    // --- Po załadowaniu DOM ---
     document.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const lokal = params.get('lokal');
+      // Ustawienie tytułu wg parametru ?lokal=
+      const lokal = new URLSearchParams(window.location.search).get('lokal');
       document.getElementById('lokal-title').textContent =
         `Wybierz termin wizyty – ${lokal==='1' ? 'Warszawa Centrum' : 'Warszawa Praga'}`;
 
+      // Flatpickr
       flatpickr('#datePicker', {
         dateFormat: 'd-m-Y',
         minDate: 'today',
@@ -195,81 +197,81 @@
         for (let h = 8; h < 18; h++) {
           for (let m = 0; m < 60; m += 20) {
             if (h === 17 && m > 40) break;
-            const t = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-            const b = document.createElement('div');
-            b.className = 'timeslot-button';
-            b.textContent = t;
-            b.onclick = () => {
+            const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+            const btn = document.createElement('div');
+            btn.className = 'timeslot-button';
+            btn.textContent = t;
+            btn.onclick = () => {
               document.querySelectorAll('.timeslot-button.selected')
                 .forEach(x => x.classList.remove('selected'));
-              b.classList.add('selected');
+              btn.classList.add('selected');
               document.getElementById('booking-details').style.display = 'block';
               selDate = dateStr;
               selTime = t;
             };
-            cont.append(b);
+            cont.append(btn);
           }
         }
       };
 
-      document.getElementById('confirm-appointment').onclick = async () => {
-        const petSelect    = document.getElementById('pet-select');
-        const doctorSelect = document.getElementById('doctor-select');
-        const visitTypeSel = document.getElementById('visit-type');
-        const lokalParam   = new URLSearchParams(window.location.search).get('lokal');
-        const location     = (lokalParam==='1') ? 'Warszawa Centrum' : 'Warszawa Praga';
+      // Handler potwierdzenia
+      document.getElementById('confirm-appointment').addEventListener('click', async () => {
+        const petSel    = document.getElementById('pet-select');
+        const docSel    = document.getElementById('doctor-select');
+        const vtSel     = document.getElementById('visit-type');
+        const lokalPar  = new URLSearchParams(window.location.search).get('lokal');
+        const location  = lokalPar==='1' ? 'Warszawa Centrum' : 'Warszawa Praga';
 
-        const petId   = petSelect.value;
-        const petName = petSelect.selectedOptions[0]?.dataset.name;
-        const petSp   = petSelect.selectedOptions[0]?.dataset.species;
-
-        const docId      = doctorSelect.value;
-        const doctorName = doctorSelect.selectedOptions[0]?.dataset.name;
-
-        const type = visitTypeSel.value;
-        const dur  = parseInt(visitTypeSel.selectedOptions[0].dataset.duration, 10);
+        const petId     = petSel.value;
+        const petName   = petSel.selectedOptions[0]?.dataset.name;
+        const petSpec   = petSel.selectedOptions[0]?.dataset.species;
+        const docId     = docSel.value;
+        const docName   = docSel.selectedOptions[0]?.dataset.name;
+        const type      = vtSel.value;
+        const duration  = parseInt(vtSel.selectedOptions[0].dataset.duration, 10);
 
         if (!petId || !docId || !type || !selDate || !selTime) {
-          return alert('Uzupełnij wszystkie pola i wybierz datę oraz godzinę.');
+          alert('Uzupełnij wszystkie pola i wybierz datę oraz godzinę.');
+          return;
         }
 
         const bookingData = {
-          createdAt:    firebase.firestore.FieldValue.serverTimestamp ? serverTimestamp() : serverTimestamp(),
-          date:         selDate,
-          hour:         selTime,
-          duration:     dur,
-          visitType:    type,
+          createdAt:   serverTimestamp(),
+          date:        selDate,
+          hour:        selTime,
+          duration,
+          visitType:   type,
           location,
           petId,
           petName,
-          petSpecies:   petSp,
-          doctorId:     docId,
-          doctorName,
-          userId:       currentUserUid
+          petSpecies:  petSpec,
+          doctorId:    docId,
+          doctorName:  docName,
+          userId:      currentUserUid
         };
 
         try {
           // 1) pod użytkownikiem
-          const userBookingsRef   = collection(db, 'users', currentUserUid, 'bookings');
-          const bookingDoc        = await addDoc(userBookingsRef, bookingData);
-          // 2) pod doktorem – używamy tego samego ID
-          const doctorBookingRef  = doc(db, 'users', docId, 'bookings', bookingDoc.id);
-          await setDoc(doctorBookingRef, bookingData);
+          const userRef   = collection(db, 'users', currentUserUid, 'bookings');
+          const newDoc    = await addDoc(userRef, bookingData);
+          // 2) pod doktorem
+          const drDocRef  = doc(db, 'users', docId, 'bookings', newDoc.id);
+          await setDoc(drDocRef, bookingData);
 
-          // potwierdzenie na UI
+          // Pokazujemy alert
           alert(
             `Wizyta potwierdzona!\n\n` +
             `Data: ${selDate}\n` +
             `Godzina: ${selTime}\n` +
-            `Lekarz: ${doctorName}\n` +
-            `Zwierzak: ${petName} (${petSp})\n` +
-            `Rodzaj wizyty: ${visitTypeSel.selectedOptions[0].textContent}`
+            `Lekarz: ${docName}\n` +
+            `Zwierzak: ${petName} (${petSpec})\n` +
+            `Rodzaj wizyty: ${vtSel.selectedOptions[0].textContent}`
           );
         } catch (e) {
           console.error(e);
-          alert('Coś poszło nie tak przy rezerwacji: ' + e.message);
+          alert('Błąd rezerwacji: ' + e.message);
         }
-      };
+      });
     });
   </script>
 </body>
