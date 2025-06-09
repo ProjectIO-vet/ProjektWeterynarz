@@ -90,7 +90,17 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      where,
+      addDoc,
+      doc,
+      setDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -128,6 +138,9 @@
             const opt = document.createElement('option');
             opt.value = docSnap.id;
             opt.textContent = `${d.name} (${d.species})`;
+            // dodatkowe atrybuty do późniejszego odczytu
+            opt.dataset.name = d.name;
+            opt.dataset.species = d.species;
             petSelect.append(opt);
           });
         }
@@ -145,9 +158,14 @@
         doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
         docsSnap.forEach(docSnap => {
           const d = docSnap.data();
+          const fullName = d.firstName
+            ? `${d.firstName} ${d.lastName || ''}`.trim()
+            : d.email;
           const opt = document.createElement('option');
           opt.value = docSnap.id;
-          opt.textContent = d.firstName ? `${d.firstName} ${d.lastName || ''}` : d.email;
+          opt.textContent = fullName;
+          // dodatkowe atrybuty
+          opt.dataset.name = fullName;
           doctorSelect.append(opt);
         });
       } catch(e) {
@@ -161,25 +179,96 @@
     document.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const lokal = params.get('lokal');
-      document.getElementById('lokal-title').textContent = `Wybierz termin wizyty – ${(lokal==='1'? 'Warszawa Centrum':'Warszawa Praga')}`;
-      flatpickr('#datePicker',{dateFormat:'d-m-Y',minDate:'today',onChange:(_,d)=>d&&generateTimeSlots(d)});
-      let selDate='', selTime='';
+      document.getElementById('lokal-title').textContent =
+        `Wybierz termin wizyty – ${lokal==='1' ? 'Warszawa Centrum' : 'Warszawa Praga'}`;
+
+      flatpickr('#datePicker', {
+        dateFormat: 'd-m-Y',
+        minDate: 'today',
+        onChange: (_, d) => d && generateTimeSlots(d)
+      });
+
+      let selDate = '', selTime = '';
       window.generateTimeSlots = dateStr => {
-        const cont = document.getElementById('timeslots'); cont.innerHTML='';
-        for(let h=8;h<18;h++)for(let m=0;m<60;m+=20){ if(h===17&&m>40)break; const t=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-          const b=document.createElement('div'); b.className='timeslot-button'; b.textContent=t; b.onclick=()=>{
-            document.querySelectorAll('.timeslot-button.selected').forEach(x=>x.classList.remove('selected'));
-            b.classList.add('selected'); document.getElementById('booking-details').style.display='block'; selDate=dateStr; selTime=t;
-          }; cont.append(b);
+        const cont = document.getElementById('timeslots');
+        cont.innerHTML = '';
+        for (let h = 8; h < 18; h++) {
+          for (let m = 0; m < 60; m += 20) {
+            if (h === 17 && m > 40) break;
+            const t = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            const b = document.createElement('div');
+            b.className = 'timeslot-button';
+            b.textContent = t;
+            b.onclick = () => {
+              document.querySelectorAll('.timeslot-button.selected')
+                .forEach(x => x.classList.remove('selected'));
+              b.classList.add('selected');
+              document.getElementById('booking-details').style.display = 'block';
+              selDate = dateStr;
+              selTime = t;
+            };
+            cont.append(b);
+          }
         }
       };
-      document.getElementById('confirm-appointment').onclick = () => {
-        const petId = document.getElementById('pet-select').value;
-        const vt = document.getElementById('visit-type'); const type=vt.value; const dur=vt.selectedOptions[0].dataset.duration;
-        const docId = document.getElementById('doctor-select').value;
-        if(!petId||!type||!docId) return alert('Uzupełnij wszystkie pola.');
-        console.log({lokal, date:selDate, time:selTime, petId, visitType:type, duration:parseInt(dur), doctorId:docId, userId:currentUserUid});
-        alert('Wizyta zarezerwowana!');
+
+      document.getElementById('confirm-appointment').onclick = async () => {
+        const petSelect    = document.getElementById('pet-select');
+        const doctorSelect = document.getElementById('doctor-select');
+        const visitTypeSel = document.getElementById('visit-type');
+        const lokalParam   = new URLSearchParams(window.location.search).get('lokal');
+        const location     = (lokalParam==='1') ? 'Warszawa Centrum' : 'Warszawa Praga';
+
+        const petId   = petSelect.value;
+        const petName = petSelect.selectedOptions[0]?.dataset.name;
+        const petSp   = petSelect.selectedOptions[0]?.dataset.species;
+
+        const docId      = doctorSelect.value;
+        const doctorName = doctorSelect.selectedOptions[0]?.dataset.name;
+
+        const type = visitTypeSel.value;
+        const dur  = parseInt(visitTypeSel.selectedOptions[0].dataset.duration, 10);
+
+        if (!petId || !docId || !type || !selDate || !selTime) {
+          return alert('Uzupełnij wszystkie pola i wybierz datę oraz godzinę.');
+        }
+
+        const bookingData = {
+          createdAt:    firebase.firestore.FieldValue.serverTimestamp ? serverTimestamp() : serverTimestamp(),
+          date:         selDate,
+          hour:         selTime,
+          duration:     dur,
+          visitType:    type,
+          location,
+          petId,
+          petName,
+          petSpecies:   petSp,
+          doctorId:     docId,
+          doctorName,
+          userId:       currentUserUid
+        };
+
+        try {
+          // 1) pod użytkownikiem
+          const userBookingsRef   = collection(db, 'users', currentUserUid, 'bookings');
+          const bookingDoc        = await addDoc(userBookingsRef, bookingData);
+          // 2) pod doktorem – używamy tego samego ID
+          const doctorBookingRef  = doc(db, 'users', docId, 'bookings', bookingDoc.id);
+          await setDoc(doctorBookingRef, bookingData);
+
+          // potwierdzenie na UI
+          alert(
+            `Wizyta potwierdzona!\n\n` +
+            `Data: ${selDate}\n` +
+            `Godzina: ${selTime}\n` +
+            `Lekarz: ${doctorName}\n` +
+            `Zwierzak: ${petName} (${petSp})\n` +
+            `Rodzaj wizyty: ${visitTypeSel.selectedOptions[0].textContent}`
+          );
+        } catch (e) {
+          console.error(e);
+          alert('Coś poszło nie tak przy rezerwacji: ' + e.message);
+        }
       };
     });
   </script>
