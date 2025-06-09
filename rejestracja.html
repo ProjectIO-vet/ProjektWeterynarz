@@ -176,7 +176,7 @@
         await setDoc(doc(db, "users", uid), {
           uid: uid,
           email: email,
-          role: "pacjent",
+          role: "user",
           created: new Date().toISOString()
         });
 
