@@ -160,11 +160,9 @@
       <nav id="nav-bar">
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
-        <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
-        <a href="login.html" id="nav-logowanie">Logowanie</a>
         <a href="#about">O nas</a>
         <a href="#contact">Kontakt</a>
-        <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
+        <a href="konto.html" id="nav-konto">Moje Konto</a>
       </nav>
     </div>
   </header>
@@ -272,16 +270,9 @@
       const linkKonto = document.getElementById("nav-konto");
 
       if (user) {
-        // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie, pokazujemy „Moje Konto”
-        linkRejestracja.style.display = "none";
-        linkLogowanie.style.display = "none";
-        linkKonto.style.display = "inline-block";
-
-        // Zapisujemy UID i ładujemy listę zwierzaków
         currentUserUid = user.uid;
         await loadPets(currentUserUid);
       } else {
-        // Użytkownik nie jest zalogowany → przekieruj na logowanie
         window.location.href = "login.html";
       }
     });
