@@ -29,6 +29,11 @@
     .submit-button { text-align:center; margin-top:20px; }
     .submit-button button { padding:10px 20px; background:#4caf50; color:#fff; border:none; border-radius:4px; font-size:1rem; cursor:pointer; transition: background .2s ease; }
     .submit-button button:hover { background:#388e3c; }
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
+    .modal { background:#fff; padding:20px; border-radius:8px; max-width:400px; text-align:center; }
+    .modal h3 { margin-top:0; color:#4caf50; }
+    .modal button { margin-top:15px; padding:8px 16px; }
     footer { background:#f4f4f4; padding:20px 0; margin-top:60px; }
     footer .container { display:flex; justify-content:space-between; flex-wrap:wrap; }
     footer p { margin:5px 0; }
@@ -57,7 +62,6 @@
       <h3>Uzupełnij szczegóły wizyty</h3>
       <label for="pet-select">Wybierz zwierzaka</label>
       <select id="pet-select"></select>
-
       <label for="visit-type">Rodzaj wizyty</label>
       <select id="visit-type">
         <option value="" disabled selected>Wybierz rodzaj wizyty</option>
@@ -65,32 +69,35 @@
         <option value="szczepienie" data-duration="30">Szczepienie (30 min)</option>
         <option value="zabieg" data-duration="120">Zabieg (120 min)</option>
       </select>
-
       <label for="doctor-select">Wybierz lekarza</label>
-      <select id="doctor-select">
-        <option value="" disabled selected>Ładowanie lekarzy...</option>
-      </select>
-
+      <select id="doctor-select"></select>
       <div class="submit-button">
         <button id="confirm-appointment">Potwierdź wizytę</button>
       </div>
     </div>
   </div>
 
+  <!-- Modal potwierdzenia -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <h3>Wizyta potwierdzona!</h3>
+      <div id="modal-content"></div>
+      <button id="modal-close">Zamknij</button>
+    </div>
+  </div>
+
   <footer>
     <div class="container">
       <div><p>&copy; 2025 BKRJ Vet</p></div>
-      <div><p>Godziny otwarcia: Pon–Pt 8–18, Sb 9–14</p></div>
+      <div><p>Pon–Pt 8–18, Sb 9–14</p></div>
     </div>
   </footer>
 
-  <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- Firebase + Autoryzacja + Firestore -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -109,77 +116,62 @@
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'login.html';
       currentUserUid = user.uid;
-      await loadPets(currentUserUid);
+      await loadPets(user.uid);
       await loadDoctors();
     });
 
     async function loadPets(uid) {
-      const petSelect = document.getElementById('pet-select');
-      petSelect.innerHTML = '<option disabled selected>Ładowanie zwierzaków...</option>';
-      try {
-        const petsSnap = await getDocs(collection(db, 'users', uid, 'pets'));
-        petSelect.innerHTML = '';
-        if (petsSnap.empty) {
-          petSelect.innerHTML = '<option disabled selected>Brak zwierzaków</option>';
-        } else {
-          petSelect.innerHTML = '<option disabled selected>Wybierz zwierzaka</option>';
-          petsSnap.forEach(docSnap => {
-            const d = docSnap.data();
-            const opt = document.createElement('option');
-            opt.value = docSnap.id;
-            opt.textContent = `${d.name} (${d.species})`;
-            petSelect.append(opt);
-          });
-        }
-      } catch(e) {
-        petSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
-      }
+      const sel = document.getElementById('pet-select'); sel.innerHTML = '<option disabled selected>Ładowanie...</option>';
+      const snap = await getDocs(collection(db,'users',uid,'pets'));
+      sel.innerHTML=''; if(snap.empty) sel.innerHTML='<option disabled>Brak zwierzaków</option>';
+      else { sel.innerHTML='<option disabled selected>Wybierz zwierzaka</option>'; snap.forEach(d=>{
+        const data=d.data(); const o=document.createElement('option'); o.value=d.id; o.textContent=`${data.name} (${data.species})`; sel.append(o);
+      });}
     }
 
     async function loadDoctors() {
-      const doctorSelect = document.getElementById('doctor-select');
-      doctorSelect.innerHTML = '<option disabled selected>Ładowanie lekarzy...</option>';
-      try {
-        const q = query(collection(db, 'users'), where('role', '==', 'doctor'));
-        const docsSnap = await getDocs(q);
-        doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
-        docsSnap.forEach(docSnap => {
-          const d = docSnap.data();
-          const opt = document.createElement('option');
-          opt.value = docSnap.id;
-          opt.textContent = d.firstName ? `${d.firstName} ${d.lastName || ''}` : d.email;
-          doctorSelect.append(opt);
-        });
-      } catch(e) {
-        doctorSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
-      }
+      const sel=document.getElementById('doctor-select'); sel.innerHTML='<option disabled selected>Ładowanie...</option>';
+      const q = query(collection(db,'users'), where('role','==','doctor'));
+      const snap = await getDocs(q);
+      sel.innerHTML=''; if(snap.empty) sel.innerHTML='<option disabled>Brak lekarzy</option>';
+      else { sel.innerHTML='<option disabled selected>Wybierz lekarza</option>'; snap.forEach(d=>{
+        const data=d.data(); const o=document.createElement('option'); o.value=d.id; o.textContent=`${data.firstName||data.email}`; sel.append(o);
+      }); }
     }
   </script>
-
-  <!-- Logika daty, godzin i rezerwacji -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const lokal = params.get('lokal');
-      document.getElementById('lokal-title').textContent = `Wybierz termin wizyty – ${(lokal==='1'? 'Warszawa Centrum':'Warszawa Praga')}`;
-      flatpickr('#datePicker',{dateFormat:'d-m-Y',minDate:'today',onChange:(_,d)=>d&&generateTimeSlots(d)});
-      let selDate='', selTime='';
-      window.generateTimeSlots = dateStr => {
-        const cont = document.getElementById('timeslots'); cont.innerHTML='';
-        for(let h=8;h<18;h++)for(let m=0;m<60;m+=20){ if(h===17&&m>40)break; const t=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const params=new URLSearchParams(location.search); const lokal=params.get('lokal');
+      document.getElementById('lokal-title').textContent = `Wybierz termin wizyty – ${lokal==='1'?'Warszawa Centrum':'Warszawa Praga'}`;
+      flatpickr('#datePicker',{dateFormat:'Y-m-d',minDate:'today',onChange:(_,d)=>d&&generateTimeSlots(d)});
+      let selDate='',selTime='';
+      window.generateTimeSlots=dateStr=>{
+        selDate=dateStr; const cont=document.getElementById('timeslots'); cont.innerHTML='';
+        for(let h=8;h<18;h++)for(let m=0;m<60;m+=20){if(h===17&&m>40)break; const t=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
           const b=document.createElement('div'); b.className='timeslot-button'; b.textContent=t; b.onclick=()=>{
-            document.querySelectorAll('.timeslot-button.selected').forEach(x=>x.classList.remove('selected'));
-            b.classList.add('selected'); document.getElementById('booking-details').style.display='block'; selDate=dateStr; selTime=t;
+            document.querySelectorAll('.timeslot-button.selected').forEach(e=>e.classList.remove('selected'));
+            b.classList.add('selected'); document.getElementById('booking-details').style.display='block'; selTime=t;
           }; cont.append(b);
         }
       };
-      document.getElementById('confirm-appointment').onclick = () => {
-        const petId = document.getElementById('pet-select').value;
-        const vt = document.getElementById('visit-type'); const type=vt.value; const dur=vt.selectedOptions[0].dataset.duration;
-        const docId = document.getElementById('doctor-select').value;
-        if(!petId||!type||!docId) return alert('Uzupełnij wszystkie pola.');
-        console.log({lokal, date:selDate, time:selTime, petId, visitType:type, duration:parseInt(dur), doctorId:docId, userId:currentUserUid});
-        alert('Wizyta zarezerwowana!');
+      document.getElementById('confirm-appointment').onclick=async()=>{
+        const petId=document.getElementById('pet-select').value;
+        const petName=document.getElementById('pet-select').selectedOptions[0].textContent;
+        const vt=document.getElementById('visit-type'); const visitType=vt.options[vt.selectedIndex].text;
+        const duration=vt.selectedOptions[0].dataset.duration;
+        const doctorId=document.getElementById('doctor-select').value;
+        const doctorName=document.getElementById('doctor-select').selectedOptions[0].textContent;
+        if(!petId||!visitType||!doctorId) return alert('Uzupełnij wszystkie pola.');
+        const booking={ createdAt: serverTimestamp(), userId:currentUserUid, petId, petName, petSpecies:petName.match(/\(([^)]+)\)/)[1], date:selDate, hour:selTime, visitType:`${visitType}`, duration: parseInt(duration), doctorId, doctorName, location: lokal==='1'?'Warszawa Centrum':'Warszawa Praga' };
+        // zapis dla pacjenta
+        await addDoc(collection(db,'users',currentUserUid,'bookings'),booking);
+        // zapis dla lekarza
+        await addDoc(collection(db,'users',doctorId,'bookings'),booking);
+        // pokaz modal
+        const modal=document.getElementById('modal'); const mc=document.getElementById('modal-content');
+        mc.innerHTML=`<p><strong>Data:</strong> ${booking.date} ${booking.hour}</p><p><strong>Zwierzak:</strong> ${booking.petName}</p><p><strong>Lekarz:</strong> ${booking.doctorName}</p><p><strong>Typ wizyty:</strong> ${booking.visitType}</p>`;
+        modal.style.display='flex';
+        document.getElementById('modal-close').onclick=()=>modal.style.display='none';
       };
     });
   </script>
