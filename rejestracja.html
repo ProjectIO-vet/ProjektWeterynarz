@@ -96,6 +96,9 @@
       <label for="password">Hasło:</label>
       <input type="password" id="password" required autocomplete="new-password" minlength="6" />
 
+      <label for="confirm-password">Potwierdź hasło:</label>
+      <input type="password" id="confirm-password" required autocomplete="new-password" minlength="6" />
+
       <button type="submit">Zarejestruj się</button>
     </form>
 
@@ -109,20 +112,19 @@
 
   <!-- 1. Załaduj moduły Firebase (wersja 9+) z CDN -->
   <script type="module">
-    // Importujemy tylko to, czego będziemy używać:
-    import { initializeApp } 
+    import { initializeApp }
       from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword 
+    import {
+      getAuth,
+      createUserWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      setDoc 
+    import {
+      getFirestore,
+      doc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // 2. Konfiguracja Firebase (skopiowana z konsoli)
+    // 2. Konfiguracja Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
@@ -138,54 +140,56 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 4. Złapiemy elementy DOM
-    const registerForm   = document.getElementById('register-form');
-    const errorMessage   = document.getElementById('error-message');
+    // 4. Elementy DOM
+    const registerForm = document.getElementById('register-form');
+    const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
 
-    // 5. Obsługa zdarzenia SUBMIT formularza
+    // 5. Obsługa SUBMIT
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Pobieramy wartości z inputów
-      const email    = document.getElementById('email').value.trim();
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm-password').value;
 
-      // Resetuj komunikaty
-      errorMessage.style.display   = 'none';
+      // Reset komunikatów
+      errorMessage.style.display = 'none';
       successMessage.style.display = 'none';
-      errorMessage.textContent     = '';
-      successMessage.textContent   = '';
+
+      // Walidacja zgodności haseł
+      if (password !== confirm) {
+        errorMessage.textContent = "Hasła nie są takie same.";
+        errorMessage.style.display = 'block';
+        return;
+      }
 
       try {
-        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie do strony głównej.";
+        successMessage.textContent = "Rejestracja powiodła się! Za chwilę nastąpi przekierowanie.";
         successMessage.style.display = 'block';
-        // a) Tworzymy konto w Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user; // obiekt użytkownika
-        const uid  = user.uid;
 
-        // b) Po pomyślnym utworzeniu konta ⇒ zapisujemy w Firestore profil użytkownika
-        //    Nadpisujemy (lub tworzymy) dokument w kolekcji "users" o ID = uid
+        // a) Tworzymy konto w Firebase Auth
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCred.user.uid;
+
+        // b) Zapis profilu w Firestore
         await setDoc(doc(db, "users", uid), {
-          uid:      uid,
-          email:    email,
-          role:     "pacjent",     // domyślnie PACJENT
-          created:  new Date().toISOString()
+          uid: uid,
+          email: email,
+          role: "pacjent",
+          created: new Date().toISOString()
         });
 
-        // c) Jeśli wszystko się udało, pokaż komunikat o sukcesie
-        window.location.href = 'index.html';
+        // c) Przekierowanie na stronę główną
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
 
-        // Opcjonalnie: wyczyść formularz
         registerForm.reset();
 
       } catch (error) {
-        // Obsługa błędów (np. niepoprawny e-mail, słabe hasło, istnienie konta)
         console.error("Błąd podczas rejestracji:", error);
         let msg = "Wystąpił nieoczekiwany błąd.";
-
-        // Rozbijmy kilka typowych kodów na czytelne komunikaty:
         switch (error.code) {
           case "auth/email-already-in-use":
             msg = "Ten adres e-mail jest już zarejestrowany.";
@@ -202,7 +206,6 @@
           default:
             msg = error.message;
         }
-
         errorMessage.textContent = msg;
         errorMessage.style.display = 'block';
       }
