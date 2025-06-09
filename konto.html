@@ -5,33 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moje Konto | BKRJ Vet</title>
   <style>
-    button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #4CAF50;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background: #45a049;
-}
-
-/* Specyficzny styl dla przycisku wylogowania */
-.logout-btn {
-  background: #d9534f;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-left: 10px;
-}
-
-.logout-btn:hover {
-  background: #c9302c;
-}
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -65,6 +38,19 @@ button:hover {
       color: #fff;
       margin-right: 15px;
       font-size: 14px;
+    }
+    .logout-btn {
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
     }
     .container {
       max-width: 800px;
@@ -108,6 +94,19 @@ button:hover {
       border-radius: 4px;
       box-sizing: border-box;
       font-size: 1rem;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
     }
     .error, .success {
       margin-top: 12px;
@@ -155,7 +154,6 @@ button:hover {
   </style>
 </head>
 <body>
-  <!-- Nagłówek taki sam jak na stronie głównej -->
   <header>
     <div class="navbar">
       <div class="logo"><h1>BKRJ Vet</h1></div>
@@ -164,11 +162,8 @@ button:hover {
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
         <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
         <a href="login.html" id="nav-logowanie">Logowanie</a>
-        <a href="index#about">O nas</a>
-        <a href="index#contact">Kontakt</a>
         <span id="user-greeting" class="user-greeting" style="display: none;"></span>
         <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
-        <button id="logout-button" class="logout-btn">Wyloguj</button>
       </nav>
     </div>
   </header>
@@ -178,101 +173,75 @@ button:hover {
       <div>
         <span id="user-greeting-top" style="font-size: 16px; font-weight: bold;"></span>
       </div>
+      <button id="logout-button" class="logout-btn">Wyloguj</button>
     </div>
 
     <h2 class="section-title">Mój Profil</h2>
-    <!-- Formularz danych kontaktowych -->
     <form id="profile-form">
       <label for="firstName">Imię:</label>
-      <input type="text" id="firstName" placeholder="Wpisz swoje imię" required />
-
+      <input type="text" id="firstName" required />
       <label for="lastName">Nazwisko:</label>
-      <input type="text" id="lastName" placeholder="Wpisz swoje nazwisko" required />
-
+      <input type="text" id="lastName" required />
       <label for="phone">Numer telefonu:</label>
-      <input type="tel" id="phone" placeholder="Wpisz numer telefonu" required />
-
-      <label for="address">Adres (ulica i numer):</label>
-      <input type="text" id="address" placeholder="Wpisz adres (ulica i numer)" />
-
+      <input type="tel" id="phone" required />
+      <label for="address">Adres:</label>
+      <input type="text" id="address" />
       <label for="city">Miasto:</label>
-      <input type="text" id="city" placeholder="Wpisz miasto" />
-
+      <input type="text" id="city" />
       <button type="submit">Zapisz dane kontaktowe</button>
       <div id="profile-success" class="success">Dane kontaktowe zapisane pomyślnie.</div>
       <div id="profile-error" class="error">Wystąpił błąd podczas zapisu danych.</div>
     </form>
 
     <h2 class="section-title">Moje Zwierzaki</h2>
-    <!-- Lista zwierzaków użytkownika -->
-    <ul id="pets-list" class="pets-list">
-      <!-- Tutaj będą wstawiane elementy listy -->
-    </ul>
+    <ul id="pets-list" class="pets-list"></ul>
 
-    <!-- Formularz dodawania nowego zwierzaka -->
+    <h2 class="section-title">Dodaj Zwierzaka</h2>
     <form id="add-pet-form">
-  <label for="petName">Imię zwierzaka:</label>
-  <input type="text" id="petName" placeholder="Wpisz imię zwierzaka" required />
+      <label for="petName">Imię zwierzaka:</label>
+      <input type="text" id="petName" placeholder="Wpisz imię zwierzaka" required />
 
-  <label for="petSpecies">Gatunek:</label>
-  <select id="petSpecies" required>
-    <option value="" disabled selected>Wybierz gatunek</option>
-    <option value="Pies">Pies</option>
-    <option value="Kot">Kot</option>
-    <option value="Papuga">Papuga</option>
-    <option value="Jeż">Jeż</option>
-    <option value="Mysz">Mysz</option>
-    <option value="Królik">Królik</option>
-    <option value="Chomik">Chomik</option>
-    <option value="Świnka morska">Świnka morska</option>
-    <option value="Wąż">Wąż</option>
-  </select>
+      <label for="petSpecies">Gatunek:</label>
+      <select id="petSpecies" required>
+        <option value="" disabled selected>Wybierz gatunek</option>
+        <option value="Pies">Pies</option>
+        <option value="Kot">Kot</option>
+        <option value="Papuga">Papuga</option>
+        <option value="Jeż">Jeż</option>
+        <option value="Mysz">Mysz</option>
+        <option value="Królik">Królik</option>
+        <option value="Chomik">Chomik</option>
+        <option value="Świnka morska">Świnka morska</option>
+        <option value="Wąż">Wąż</option>
+      </select>
 
-  <label for="petBreed">Rasa:</label>
-  <input type="text" id="petBreed" placeholder="Wpisz rasę zwierzaka" required />
+      <label for="petBreed">Rasa:</label>
+      <input type="text" id="petBreed" placeholder="Wpisz rasę zwierzaka" required />
 
-  <label for="petAge">Wiek (w latach):</label>
-  <input type="number" id="petAge" min="0" step="1" placeholder="Wpisz wiek" required />
+      <label for="petAge">Wiek (w latach):</label>
+      <input type="number" id="petAge" min="0" step="1" placeholder="Wpisz wiek" required />
 
-  <label for="petWeight">Waga (kg):</label>
-  <input type="number" id="petWeight" min="0" step="0.1" placeholder="Wpisz wagę" required />
+      <label for="petWeight">Waga (kg):</label>
+      <input type="number" id="petWeight" min="0" step="0.1" placeholder="Wpisz wagę" required />
 
-  <label for="petGender">Płeć:</label>
-  <select id="petGender" required>
-    <option value="" disabled selected>Wybierz płeć</option>
-    <option value="Samiec">Samiec</option>
-    <option value="Samica">Samica</option>
-  </select>
+      <label for="petGender">Płeć:</label>
+      <select id="petGender" required>
+        <option value="" disabled selected>Wybierz płeć</option>
+        <option value="Samiec">Samiec</option>
+        <option value="Samica">Samica</option>
+      </select>
 
-  <button type="submit">Dodaj zwierzaka</button>
-  <div id="pet-success" class="success">Zwierzak dodany pomyślnie.</div>
-  <div id="pet-error" class="error">Wystąpił błąd podczas dodawania zwierzaka.</div>
-</form>
-
+      <button type="submit">Dodaj zwierzaka</button>
+      <div id="pet-success" class="success">Zwierzak dodany pomyślnie.</div>
+      <div id="pet-error" class="error">Wystąpił błąd podczas dodawania zwierzaka.</div>
+    </form>
   </div>
 
- 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      updateDoc,
-      collection,
-      addDoc,
-      getDocs,
-      deleteDoc
-    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // ------------------------------------------------------------
-    // 1. Konfiguracja Firebase (skopiuj dokładnie z konsoli)
-    // ------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
@@ -282,119 +251,88 @@ button:hover {
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
     };
-    const app   = initializeApp(firebaseConfig);
-    const auth  = getAuth(app);
-    const db    = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // ------------------------------------------------------------
-    // 2. Pobranie elementów DOM
-    // ------------------------------------------------------------
-    const linkRejestracja    = document.getElementById('nav-rejestracja');
-    const linkLogowanie      = document.getElementById('nav-logowanie');
-    const linkKonto          = document.getElementById('nav-konto');
-    const userGreeting       = document.getElementById('user-greeting');
-    const userGreetingTop    = document.getElementById('user-greeting-top');
-    const logoutButton       = document.getElementById('logout-button');
+    const linkRejestracja = document.getElementById('nav-rejestracja');
+    const linkLogowanie = document.getElementById('nav-logowanie');
+    const linkKonto = document.getElementById('nav-konto');
+    const userGreeting = document.getElementById('user-greeting');
+    const userGreetingTop = document.getElementById('user-greeting-top');
+    const logoutButton = document.getElementById('logout-button');
 
-    const profileForm       = document.getElementById('profile-form');
-    const firstNameInput    = document.getElementById('firstName');
-    const lastNameInput     = document.getElementById('lastName');
-    const phoneInput        = document.getElementById('phone');
-    const addressInput      = document.getElementById('address');
-    const cityInput         = document.getElementById('city');
-    const profileSuccess    = document.getElementById('profile-success');
-    const profileError      = document.getElementById('profile-error');
+    const profileForm = document.getElementById('profile-form');
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const phoneInput = document.getElementById('phone');
+    const addressInput = document.getElementById('address');
+    const cityInput = document.getElementById('city');
+    const profileSuccess = document.getElementById('profile-success');
+    const profileError = document.getElementById('profile-error');
 
-    const petsList          = document.getElementById('pets-list');
-    const addPetForm        = document.getElementById('add-pet-form');
-    const petNameInput      = document.getElementById('petName');
-    const petSpeciesSelect  = document.getElementById('petSpecies');
-    const petSizeSelect     = document.getElementById('petSize');
-    const petAgeInput       = document.getElementById('petAge');
-    const petSuccess        = document.getElementById('pet-success');
-    const petError          = document.getElementById('pet-error');
+    const petsList = document.getElementById('pets-list');
+    const addPetForm = document.getElementById('add-pet-form');
+    const petNameInput = document.getElementById('petName');
+    const petSpeciesSelect = document.getElementById('petSpecies');
+    const petBreedInput = document.getElementById('petBreed');
+    const petAgeInput = document.getElementById('petAge');
+    const petWeightInput = document.getElementById('petWeight');
+    const petGenderSelect = document.getElementById('petGender');
+    const petSuccess = document.getElementById('pet-success');
+    const petError = document.getElementById('pet-error');
 
     let currentUserUid = null;
 
-    // ------------------------------------------------------------
-    // 3. Sprawdzamy stan autoryzacji – jeśli nie zalogowany, przekieruj
-    // ------------------------------------------------------------
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Jeśli nikt nie jest zalogowany, przekieruj na stronę główną
         window.location.href = "index.html";
         return;
       }
-      // Użytkownik jest zalogowany
       currentUserUid = user.uid;
-
-      // Ustawiamy powitanie w nagłówku i przycisk Logout
       userGreeting.textContent = `Witaj, ${user.email}`;
       userGreeting.style.display = 'inline-block';
       userGreetingTop.textContent = `Witaj, ${user.email}`;
-
-      // Ukrywamy linki Rejestracja/Logowanie
       linkRejestracja.style.display = 'none';
-      linkLogowanie.style.display   = 'none';
-      // Pokażemy „Moje Konto”
-      linkKonto.style.display       = 'inline-block';
-
-      // Wczytaj dane profilu i zwierzaków
+      linkLogowanie.style.display = 'none';
+      linkKonto.style.display = 'inline-block';
       await loadUserProfile();
       await loadUserPets();
     });
 
-    // ------------------------------------------------------------
-    // 4. Obsługa wylogowania
-    // ------------------------------------------------------------
+    logoutButton.addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
 
-// Wywołaj funkcję po załadowaniu strony
-logoutButton.addEventListener('click', async () => {
-  try {
-    await signOut(auth);
-    // Przekieruj na stronę główną z parametrem w URL
-    window.location.href = "index.html?notification=Zostałeś+pomyślnie+wylogowany!&isError=false";
-  } catch (error) {
-    console.error('Błąd wylogowania:', error);
-    window.location.href = "index.html?notification=Wystąpił+błąd+podczas+wylogowania&isError=true";
-  }
-});
-
-    // ------------------------------------------------------------
-    // 5. Wczytanie danych kontaktowych użytkownika z Firestore
-    // ------------------------------------------------------------
     async function loadUserProfile() {
       try {
         const userDocRef = doc(db, "users", currentUserUid);
-        const userSnap   = await getDoc(userDocRef);
+        const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
           firstNameInput.value = data.firstName || "";
-          lastNameInput.value  = data.lastName  || "";
-          phoneInput.value     = data.phone     || "";
-          addressInput.value   = data.address   || "";
-          cityInput.value      = data.city      || "";
+          lastNameInput.value = data.lastName || "";
+          phoneInput.value = data.phone || "";
+          addressInput.value = data.address || "";
+          cityInput.value = data.city || "";
         }
       } catch (err) {
         console.error("Błąd podczas pobierania profilu:", err);
       }
     }
 
-    // ------------------------------------------------------------
-    // 6. Obsługa zapisu/aktualizacji danych kontaktowych
-    // ------------------------------------------------------------
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       profileSuccess.style.display = 'none';
-      profileError.style.display   = 'none';
-
+      profileError.style.display = 'none';
       const profileRef = doc(db, "users", currentUserUid);
       const profileData = {
         firstName: firstNameInput.value.trim(),
-        lastName:  lastNameInput.value.trim(),
-        phone:     phoneInput.value.trim(),
-        address:   addressInput.value.trim(),
-        city:      cityInput.value.trim()
+        lastName: lastNameInput.value.trim(),
+        phone: phoneInput.value.trim(),
+        address: addressInput.value.trim(),
+        city: cityInput.value.trim()
       };
       try {
         await updateDoc(profileRef, profileData);
@@ -405,27 +343,20 @@ logoutButton.addEventListener('click', async () => {
       }
     });
 
-    // ------------------------------------------------------------
-    // 7. Wczytywanie listy zwierzaków
-    // ------------------------------------------------------------
     async function loadUserPets() {
-      petsList.innerHTML = "";
+      petsList.innerHTML = '';
       try {
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         const petsSnapshot = await getDocs(petsColRef);
         petsSnapshot.forEach(docSnap => {
           const petData = docSnap.data();
-          const li = document.createElement("li");
-
-          const infoSpan = document.createElement("span");
-          // Wyświetlamy: Imię • Gatunek • Rozmiar • Wiek
-          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.size} • ${petData.age} ${petData.age == 1 ? "rok" : "lata"}`;
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.textContent = "Usuń";
-          deleteBtn.className = "delete-pet";
-          deleteBtn.addEventListener("click", () => deletePet(docSnap.id));
-
+          const li = document.createElement('li');
+          const infoSpan = document.createElement('span');
+          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.breed} • ${petData.age} lat • ${petData.weight} kg • ${petData.gender}`;
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Usuń';
+          deleteBtn.className = 'delete-pet';
+          deleteBtn.addEventListener('click', () => deletePet(docSnap.id));
           li.appendChild(infoSpan);
           li.appendChild(deleteBtn);
           petsList.appendChild(li);
@@ -435,23 +366,18 @@ logoutButton.addEventListener('click', async () => {
       }
     }
 
-    // ------------------------------------------------------------
-    // 8. Obsługa dodawania nowego zwierzaka
-    // ------------------------------------------------------------
     addPetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       petSuccess.style.display = 'none';
-      petError.style.display   = 'none';
-
-      const species = petSpeciesSelect.value;
-      const size = petSizeSelect.value;
+      petError.style.display = 'none';
       const newPet = {
-        name:     petNameInput.value.trim(),
-        species:  species,
-        size:     size,
-        age:      parseInt(petAgeInput.value, 10)
+        name: petNameInput.value.trim(),
+        species: petSpeciesSelect.value,
+        breed: petBreedInput.value.trim(),
+        age: parseInt(petAgeInput.value, 10),
+        weight: parseFloat(petWeightInput.value),
+        gender: petGenderSelect.value
       };
-
       try {
         const petsColRef = collection(db, "users", currentUserUid, "pets");
         await addDoc(petsColRef, newPet);
@@ -464,9 +390,6 @@ logoutButton.addEventListener('click', async () => {
       }
     });
 
-    // ------------------------------------------------------------
-    // 9. Usuwanie zwierzaka
-    // ------------------------------------------------------------
     async function deletePet(petId) {
       try {
         const petDocRef = doc(db, "users", currentUserUid, "pets", petId);
@@ -479,4 +402,407 @@ logoutButton.addEventListener('click', async () => {
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moje Konto | BKRJ Vet</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background: #f7f7f7;
+      color: #333;
+    }
+    header {
+      background: #4CAF50;
+      color: #fff;
+      padding: 20px 0;
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .navbar a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 15px;
+      font-weight: bold;
+    }
+    .navbar a:hover {
+      text-decoration: underline;
+    }
+    .user-greeting {
+      color: #fff;
+      margin-right: 15px;
+      font-size: 14px;
+    }
+    .logout-btn {
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding-bottom: 40px;
+    }
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h2.section-title {
+      color: #4CAF50;
+      margin-top: 30px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 5px;
+    }
+    form {
+      margin-top: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .error, .success {
+      margin-top: 12px;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    .error {
+      color: #d8000c;
+      background: #ffd2d2;
+    }
+    .success {
+      color: #4F8A10;
+      background: #DFF2BF;
+    }
+    .pets-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+    .pets-list li {
+      background: #f1f1f1;
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pets-list li span {
+      display: inline-block;
+    }
+    .delete-pet {
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .delete-pet:hover {
+      background: #c9302c;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <div class="logo"><h1>BKRJ Vet</h1></div>
+      <nav id="nav-bar">
+        <a href="index.html">Strona główna</a>
+        <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
+        <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
+        <a href="login.html" id="nav-logowanie">Logowanie</a>
+        <span id="user-greeting" class="user-greeting" style="display: none;"></span>
+        <a href="konto.html" id="nav-konto" style="display: none;">Moje Konto</a>
+      </nav>
+    </div>
+  </header>
 
+  <div class="container">
+    <div class="header-actions">
+      <div>
+        <span id="user-greeting-top" style="font-size: 16px; font-weight: bold;"></span>
+      </div>
+      <button id="logout-button" class="logout-btn">Wyloguj</button>
+    </div>
+
+    <h2 class="section-title">Mój Profil</h2>
+    <form id="profile-form">
+      <label for="firstName">Imię:</label>
+      <input type="text" id="firstName" required />
+      <label for="lastName">Nazwisko:</label>
+      <input type="text" id="lastName" required />
+      <label for="phone">Numer telefonu:</label>
+      <input type="tel" id="phone" required />
+      <label for="address">Adres:</label>
+      <input type="text" id="address" />
+      <label for="city">Miasto:</label>
+      <input type="text" id="city" />
+      <button type="submit">Zapisz dane kontaktowe</button>
+      <div id="profile-success" class="success">Dane kontaktowe zapisane pomyślnie.</div>
+      <div id="profile-error" class="error">Wystąpił błąd podczas zapisu danych.</div>
+    </form>
+
+    <h2 class="section-title">Moje Zwierzaki</h2>
+    <ul id="pets-list" class="pets-list"></ul>
+
+    <h2 class="section-title">Dodaj Zwierzaka</h2>
+    <form id="add-pet-form">
+      <label for="petName">Imię zwierzaka:</label>
+      <input type="text" id="petName" placeholder="Wpisz imię zwierzaka" required />
+
+      <label for="petSpecies">Gatunek:</label>
+      <select id="petSpecies" required>
+        <option value="" disabled selected>Wybierz gatunek</option>
+        <option value="Pies">Pies</option>
+        <option value="Kot">Kot</option>
+        <option value="Papuga">Papuga</option>
+        <option value="Jeż">Jeż</option>
+        <option value="Mysz">Mysz</option>
+        <option value="Królik">Królik</option>
+        <option value="Chomik">Chomik</option>
+        <option value="Świnka morska">Świnka morska</option>
+        <option value="Wąż">Wąż</option>
+      </select>
+
+      <label for="petBreed">Rasa:</label>
+      <input type="text" id="petBreed" placeholder="Wpisz rasę zwierzaka" required />
+
+      <label for="petAge">Wiek (w latach):</label>
+      <input type="number" id="petAge" min="0" step="1" placeholder="Wpisz wiek" required />
+
+      <label for="petWeight">Waga (kg):</label>
+      <input type="number" id="petWeight" min="0" step="0.1" placeholder="Wpisz wagę" required />
+
+      <label for="petGender">Płeć:</label>
+      <select id="petGender" required>
+        <option value="" disabled selected>Wybierz płeć</option>
+        <option value="Samiec">Samiec</option>
+        <option value="Samica">Samica</option>
+      </select>
+
+      <button type="submit">Dodaj zwierzaka</button>
+      <div id="pet-success" class="success">Zwierzak dodany pomyślnie.</div>
+      <div id="pet-error" class="error">Wystąpił błąd podczas dodawania zwierzaka.</div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const linkRejestracja = document.getElementById('nav-rejestracja');
+    const linkLogowanie = document.getElementById('nav-logowanie');
+    const linkKonto = document.getElementById('nav-konto');
+    const userGreeting = document.getElementById('user-greeting');
+    const userGreetingTop = document.getElementById('user-greeting-top');
+    const logoutButton = document.getElementById('logout-button');
+
+    const profileForm = document.getElementById('profile-form');
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const phoneInput = document.getElementById('phone');
+    const addressInput = document.getElementById('address');
+    const cityInput = document.getElementById('city');
+    const profileSuccess = document.getElementById('profile-success');
+    const profileError = document.getElementById('profile-error');
+
+    const petsList = document.getElementById('pets-list');
+    const addPetForm = document.getElementById('add-pet-form');
+    const petNameInput = document.getElementById('petName');
+    const petSpeciesSelect = document.getElementById('petSpecies');
+    const petBreedInput = document.getElementById('petBreed');
+    const petAgeInput = document.getElementById('petAge');
+    const petWeightInput = document.getElementById('petWeight');
+    const petGenderSelect = document.getElementById('petGender');
+    const petSuccess = document.getElementById('pet-success');
+    const petError = document.getElementById('pet-error');
+
+    let currentUserUid = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUserUid = user.uid;
+      userGreeting.textContent = `Witaj, ${user.email}`;
+      userGreeting.style.display = 'inline-block';
+      userGreetingTop.textContent = `Witaj, ${user.email}`;
+      linkRejestracja.style.display = 'none';
+      linkLogowanie.style.display = 'none';
+      linkKonto.style.display = 'inline-block';
+      await loadUserProfile();
+      await loadUserPets();
+    });
+
+    logoutButton.addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+
+    async function loadUserProfile() {
+      try {
+        const userDocRef = doc(db, "users", currentUserUid);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          firstNameInput.value = data.firstName || "";
+          lastNameInput.value = data.lastName || "";
+          phoneInput.value = data.phone || "";
+          addressInput.value = data.address || "";
+          cityInput.value = data.city || "";
+        }
+      } catch (err) {
+        console.error("Błąd podczas pobierania profilu:", err);
+      }
+    }
+
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      profileSuccess.style.display = 'none';
+      profileError.style.display = 'none';
+      const profileRef = doc(db, "users", currentUserUid);
+      const profileData = {
+        firstName: firstNameInput.value.trim(),
+        lastName: lastNameInput.value.trim(),
+        phone: phoneInput.value.trim(),
+        address: addressInput.value.trim(),
+        city: cityInput.value.trim()
+      };
+      try {
+        await updateDoc(profileRef, profileData);
+        profileSuccess.style.display = 'block';
+      } catch (err) {
+        console.error("Błąd przy zapisie profilu:", err);
+        profileError.style.display = 'block';
+      }
+    });
+
+    async function loadUserPets() {
+      petsList.innerHTML = '';
+      try {
+        const petsColRef = collection(db, "users", currentUserUid, "pets");
+        const petsSnapshot = await getDocs(petsColRef);
+        petsSnapshot.forEach(docSnap => {
+          const petData = docSnap.data();
+          const li = document.createElement('li');
+          const infoSpan = document.createElement('span');
+          infoSpan.textContent = `${petData.name} • ${petData.species} • ${petData.breed} • ${petData.age} lat • ${petData.weight} kg • ${petData.gender}`;
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Usuń';
+          deleteBtn.className = 'delete-pet';
+          deleteBtn.addEventListener('click', () => deletePet(docSnap.id));
+          li.appendChild(infoSpan);
+          li.appendChild(deleteBtn);
+          petsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error("Błąd podczas wczytywania zwierzaków:", err);
+      }
+    }
+
+    addPetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      petSuccess.style.display = 'none';
+      petError.style.display = 'none';
+      const newPet = {
+        name: petNameInput.value.trim(),
+        species: petSpeciesSelect.value,
+        breed: petBreedInput.value.trim(),
+        age: parseInt(petAgeInput.value, 10),
+        weight: parseFloat(petWeightInput.value),
+        gender: petGenderSelect.value
+      };
+      try {
+        const petsColRef = collection(db, "users", currentUserUid, "pets");
+        await addDoc(petsColRef, newPet);
+        await loadUserPets();
+        petSuccess.style.display = 'block';
+        addPetForm.reset();
+      } catch (err) {
+        console.error("Błąd przy dodawaniu zwierzaka:", err);
+        petError.style.display = 'block';
+      }
+    });
+
+    async function deletePet(petId) {
+      try {
+        const petDocRef = doc(db, "users", currentUserUid, "pets", petId);
+        await deleteDoc(petDocRef);
+        await loadUserPets();
+      } catch (err) {
+        console.error("Błąd przy usuwaniu zwierzaka:", err);
+      }
+    }
+  </script>
+</body>
+</html>
