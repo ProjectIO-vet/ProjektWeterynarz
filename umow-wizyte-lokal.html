@@ -216,62 +216,72 @@
 
       // Handler potwierdzenia
       document.getElementById('confirm-appointment').addEventListener('click', async () => {
-        const petSel    = document.getElementById('pet-select');
-        const docSel    = document.getElementById('doctor-select');
-        const vtSel     = document.getElementById('visit-type');
-        const lokalPar  = new URLSearchParams(window.location.search).get('lokal');
-        const location  = lokalPar==='1' ? 'Warszawa Centrum' : 'Warszawa Praga';
+  const petSel    = document.getElementById('pet-select');
+  const docSel    = document.getElementById('doctor-select');
+  const vtSel     = document.getElementById('visit-type');
+  const lokalPar  = new URLSearchParams(window.location.search).get('lokal');
+  const location  = lokalPar==='1' ? 'Warszawa Centrum' : 'Warszawa Praga';
 
-        const petId     = petSel.value;
-        const petName   = petSel.selectedOptions[0]?.dataset.name;
-        const petSpec   = petSel.selectedOptions[0]?.dataset.species;
-        const docId     = docSel.value;
-        const docName   = docSel.selectedOptions[0]?.dataset.name;
-        const type      = vtSel.value;
-        const duration  = parseInt(vtSel.selectedOptions[0].dataset.duration, 10);
+  const petId     = petSel.value;
+  const petName   = petSel.selectedOptions[0]?.dataset.name;
+  const petSpec   = petSel.selectedOptions[0]?.dataset.species;
+  const docId     = docSel.value;
+  const docName   = docSel.selectedOptions[0]?.dataset.name;
 
-        if (!petId || !docId || !type || !selDate || !selTime) {
-          alert('Uzupełnij wszystkie pola i wybierz datę oraz godzinę.');
-          return;
-        }
+  // zamiast .value bierzemy pełny tekst (np. "Kontrola (20 min)")
+  const visitTypeText = vtSel.selectedOptions[0]?.textContent;
+  // duration w minutach wciąż trzymamy w data-duration
+  const durationMin = parseInt(vtSel.selectedOptions[0].dataset.duration, 10);
 
-        const bookingData = {
-          createdAt:   serverTimestamp(),
-          date:        selDate,
-          hour:        selTime,
-          duration,
-          visitType:   type,
-          location,
-          petId,
-          petName,
-          petSpecies:  petSpec,
-          doctorId:    docId,
-          doctorName:  docName,
-          userId:      currentUserUid
-        };
+  if (!petId || !docId || !visitTypeText || !selDate || !selTime) {
+    alert('Uzupełnij wszystkie pola i wybierz datę oraz godzinę.');
+    return;
+  }
 
-        try {
-          // 1) pod użytkownikiem
-          const userRef   = collection(db, 'users', currentUserUid, 'bookings');
-          const newDoc    = await addDoc(userRef, bookingData);
-          // 2) pod doktorem
-          const drDocRef  = doc(db, 'users', docId, 'bookings', newDoc.id);
-          await setDoc(drDocRef, bookingData);
+  // obliczamy endhour = start + duration − 1 minuta
+  const [h, m] = selTime.split(':').map(x=>parseInt(x,10));
+  const startMinutes = h*60 + m;
+  const endTotalMin = startMinutes + durationMin - 1;
+  const endH = String(Math.floor(endTotalMin/60)).padStart(2,'0');
+  const endM = String(endTotalMin % 60).padStart(2,'0');
+  const endhour = `${endH}:${endM}`;
 
-          // Pokazujemy alert
-          alert(
-            `Wizyta potwierdzona!\n\n` +
-            `Data: ${selDate}\n` +
-            `Godzina: ${selTime}\n` +
-            `Lekarz: ${docName}\n` +
-            `Zwierzak: ${petName} (${petSpec})\n` +
-            `Rodzaj wizyty: ${vtSel.selectedOptions[0].textContent}`
-          );
-        } catch (e) {
-          console.error(e);
-          alert('Błąd rezerwacji: ' + e.message);
-        }
-      });
+  const bookingData = {
+    createdAt:   serverTimestamp(),
+    date:        selDate,
+    hour:        selTime,
+    endhour,                   // nowe pole
+    visitType:   visitTypeText,// pełny tekst
+    location,
+    petId,
+    petName,
+    petSpecies:  petSpec,
+    doctorId:    docId,
+    doctorName:  docName,
+    userId:      currentUserUid
+  };
+
+  try {
+    // 1) pod użytkownikiem
+    const userRef   = collection(db, 'users', currentUserUid, 'bookings');
+    const newDoc    = await addDoc(userRef, bookingData);
+    // 2) pod doktorem z tym samym ID
+    const drDocRef  = doc(db, 'users', docId, 'bookings', newDoc.id);
+    await setDoc(drDocRef, bookingData);
+
+    alert(
+      `Wizyta potwierdzona!\n\n` +
+      `Data: ${selDate}\n` +
+      `Godzina: ${selTime} – ${endhour}\n` +
+      `Lekarz: ${docName}\n` +
+      `Zwierzak: ${petName} (${petSpec})\n` +
+      `Rodzaj wizyty: ${visitTypeText}`
+    );
+  } catch (e) {
+    console.error(e);
+    alert('Błąd rezerwacji: ' + e.message);
+  }
+});
     });
   </script>
 </body>
