@@ -109,6 +109,7 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
+    const bookingsMap  = {};
     // --- Inicjalizacja Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -145,6 +146,33 @@ async function loadSchedules() {
     console.error("Nie udało się wczytać grafiku:", e);
   }
 }
+      async function loadBookingsForDay(dateStr) {
+  // czyścimy stare dane
+  Object.keys(bookingsMap).forEach(id => delete bookingsMap[id]);
+
+  // iterujemy po wszystkich lekarzach z schedulesMap
+  await Promise.all(
+    Object.keys(schedulesMap).map(async doctorId => {
+      // niech będzie, że jeżeli lekarz nie ma w ogóle grafiku, to nie wyciągamy nic
+      if (!schedulesMap[doctorId]) return;
+      const q = query(
+        collection(db, 'users', doctorId, 'bookings'),
+        where('date', '==', dateStr)
+      );
+      const snap = await getDocs(q);
+      bookingsMap[doctorId] = snap.docs.map(d => {
+        const { hour, endhour } = d.data();
+        const [hs, ms] = hour.split(':').map(n=>+n);
+        const [he, me] = endhour.split(':').map(n=>+n);
+        return {
+          startMin: hs*60 + ms,
+          endMin:   he*60 + me
+        };
+      });
+    })
+  );
+}
+
       currentUserUid = user.uid;
       await loadPets(currentUserUid);
       await loadDoctors();
@@ -261,7 +289,7 @@ async function loadSchedules() {
   cont.innerHTML = '';
   selDateObj = dateObj;
   selDate = dateObj.toISOString().slice(0,10); // zapamiętujemy w formacie YYYY-MM-DD
-
+  await loadBookingsForDay(selDate);
   for (let h = 8; h < 18; h++) {
     for (let m = 0; m < 60; m += 20) {
       if (h === 17 && m > 40) break;
@@ -276,7 +304,7 @@ async function loadSchedules() {
         // brak onclick
       } else {
         btn.textContent = t;
-        btn.onclick = async () => {
+        btn.onclick = () => {
   // 1) zaznacz slot
   document.querySelectorAll('.timeslot-button.selected')
     .forEach(x => x.classList.remove('selected'));
