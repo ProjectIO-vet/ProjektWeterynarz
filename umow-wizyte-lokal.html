@@ -320,17 +320,13 @@
   document.getElementById('booking-details').style.display = 'block';
   selTime = t;
 
-  // jeśli nie wybrano jeszcze rodzaju wizyty, to kończymy
-  const visitTypeEl = document.getElementById('visit-type');
-  const durationAttr = visitTypeEl.selectedOptions[0]?.dataset.duration;
-  if (!durationAttr) {
-    return;
-  }
-
   // 2) przygotuj interwał slotu w minutach
-  const durationMin = parseInt(durationAttr, 10);
+  const durationMin = parseInt(
+    document.getElementById('visit-type')
+      .selectedOptions[0]
+      .dataset.duration, 10);
   const [h0, m0] = t.split(':').map(n => +n);
-  const slotStartMin = h0 * 60 + m0;
+  const slotStartMin = h0*60 + m0;
   const slotEndMin   = slotStartMin + durationMin - 1;
 
   // 3) filtr harmonogramu i reset selecta
@@ -338,39 +334,40 @@
   doctorSelect.value = '';
   doctorSelect.selectedIndex = 0;
 
-  // 4) wyznacz lekarzy dostępnych wg grafiku
+  // 4) najpierw wyznacz lekarzy w ogóle dostępnych wg grafiku
   const candidates = [];
   Array.from(doctorSelect.options).forEach(opt => {
-    if (!opt.value) return;
+    if (!opt.value) return;   // pomiń placeholder
     const okSchedule = isDoctorAvailable(opt.value, dateObj, t);
     opt.disabled = !okSchedule;
     if (okSchedule) candidates.push(opt.value);
   });
 
-  // 5) pobierz istniejące wizyty tych kandydatów
-  const busyMap = {};
+  // 5) teraz pobierzmy ich wizyty w tym dniu:
+  const busyMap = {};  // doctorId => [{startMin,endMin},...]
   await Promise.all(candidates.map(async docId => {
     const q = query(
       collection(db, 'users', docId, 'bookings'),
-      where('date', '==', selDate)
+      where('date','==', selDate)
     );
     const snap = await getDocs(q);
     busyMap[docId] = snap.docs.map(d => {
       const data = d.data();
-      const [hs, ms] = data.hour.split(':').map(n => +n);
-      const [he, me] = data.endhour.split(':').map(n => +n);
+      const [hs, ms] = data.hour.split(':').map(n=>+n);
+      const [he, me] = data.endhour.split(':').map(n=>+n);
       return {
-        startMin: hs * 60 + ms,
-        endMin:   he * 60 + me
+        startMin: hs*60 + ms,
+        endMin:   he*60 + me
       };
     });
   }));
 
-  // 6) wyłącz tych, którzy mają overlap
+  // 6) wyłącz tych, którzy mają overlap:
   Array.from(doctorSelect.options).forEach(opt => {
     if (!opt.value) return;
-    if (opt.disabled) return;
+    if (opt.disabled) return; // już niedostępni wg grafiku
     const bookings = busyMap[opt.value] || [];
+    // czy którykolwiek booking nakłada się na nasz slot?
     const conflict = bookings.some(b =>
       !(b.endMin < slotStartMin || b.startMin > slotEndMin)
     );
@@ -387,12 +384,6 @@
       document.getElementById('confirm-appointment').addEventListener('click', async () => {
   const petSel    = document.getElementById('pet-select');
   const docSel    = document.getElementById('doctor-select');
-        const anyDoctor = Array.from(docSel.options)
-  .some(opt => opt.value && !opt.disabled);
-if (!anyDoctor) {
-  alert('Brak dostępnych lekarzy w tym terminie i długości wizyty. Wybierz inny slot lub zmień typ wizyty.');
-  return;
-}
   const vtSel     = document.getElementById('visit-type');
   const lokalPar  = new URLSearchParams(window.location.search).get('lokal');
   const location  = lokalPar==='1' ? 'Warszawa Centrum' : 'Warszawa Praga';
