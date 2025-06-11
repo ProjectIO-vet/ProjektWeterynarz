@@ -373,6 +373,20 @@
     );
     if (conflict) opt.disabled = true;
   });
+          // 7) sprawdź, czy został chociaż jeden lekarz, który zmieści całą wizytę
+  const anyAvailable = Array.from(doctorSelect.options)
+    .some(opt => opt.value && !opt.disabled);
+
+  if (!anyAvailable) {
+    alert(
+      'Brak dostępnych lekarzy dla wybranej długości wizyty.\n' +
+      'Wybierz inną godzinę lub inny typ wizyty.'
+    );
+    // cofnij zaznaczenie godziny i schowaj formularz
+    btn.classList.remove('selected');
+    document.getElementById('booking-details').style.display = 'none';
+    return;
+  }
 };
       }
       cont.append(btn);
