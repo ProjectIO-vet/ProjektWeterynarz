@@ -110,31 +110,8 @@
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
     const bookingsMap  = {};
-    // --- Inicjalizacja Firebase ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
-      authDomain: "bkrj-vet.firebaseapp.com",
-      projectId: "bkrj-vet",
-      storageBucket: "bkrj-vet.firebasestorage.app",
-      messagingSenderId: "289704325759",
-      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
-      measurementId: "G-EH0EC8NKXC"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-    let currentUserUid = "";
 
-    onAuthStateChanged(auth, async user => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-
-      
-
-// --- 2) funkcja ładująca dostępności
-async function loadSchedules() {
+    async function loadSchedules() {
   try {
     const snap = await getDocs(collection(db, 'schedules'));
     snap.forEach(docSnap => {
@@ -146,7 +123,8 @@ async function loadSchedules() {
     console.error("Nie udało się wczytać grafiku:", e);
   }
 }
-      async function loadBookingsForDay(dateStr) {
+
+    async function loadBookingsForDay(dateStr) {
   // czyścimy stare dane
   Object.keys(bookingsMap).forEach(id => delete bookingsMap[id]);
 
@@ -172,6 +150,30 @@ async function loadSchedules() {
     })
   );
 }
+    // --- Inicjalizacja Firebase ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    let currentUserUid = "";
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      
+
+// --- 2) funkcja ładująca dostępności
 
       currentUserUid = user.uid;
       await loadPets(currentUserUid);
