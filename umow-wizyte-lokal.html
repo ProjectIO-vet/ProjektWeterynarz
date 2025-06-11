@@ -110,7 +110,7 @@
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
     const bookingsMap  = {};
-
+    const doctorBranchMap = {};
     async function loadSchedules() {
   try {
     const snap = await getDocs(collection(db, 'schedules'));
@@ -130,22 +130,20 @@
 
   // iterujemy po wszystkich lekarzach z schedulesMap
   await Promise.all(
-    Object.keys(schedulesMap).map(async doctorId => {
-      // niech będzie, że jeżeli lekarz nie ma w ogóle grafiku, to nie wyciągamy nic
-      if (!schedulesMap[doctorId]) return;
-      const q = query(
-        collection(db, 'users', doctorId, 'bookings'),
-        where('date', '==', dateStr)
-      );
-      const snap = await getDocs(q);
-      bookingsMap[doctorId] = snap.docs.map(d => {
-        const { hour, endhour } = d.data();
-        const [hs, ms] = hour.split(':').map(n=>+n);
-        const [he, me] = endhour.split(':').map(n=>+n);
-        return {
-          startMin: hs*60 + ms,
-          endMin:   he*60 + me
-        };
+    Object.keys(schedulesMap)
+      // tylko lekarze z tego lokalu
+      .filter(doctorId => doctorBranchMap[doctorId] === branchKey)
+      .map(async doctorId => {
+        const q = query(
+          collection(db, 'users', doctorId, 'bookings'),
+          where('date', '==', dateStr)
+        );
+        const snap = await getDocs(q);
+        bookingsMap[doctorId] = snap.docs.map(d => {
+          const { hour, endhour } = d.data();
+          const [hs, ms] = hour.split(':').map(n=>+n);
+          const [he, me] = endhour.split(':').map(n=>+n);
+          return { startMin: hs*60 + ms, endMin: he*60 + me };
       });
     })
   );
@@ -212,8 +210,9 @@
   const tMin = h * 60 + m;
   const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
   const dayName = days[dateObj.getDay()];
-
+  const branchKey = new URLSearchParams(window.location.search).get('lokal');
   return Object.keys(schedulesMap).some(doctorId => {
+     if (doctorBranchMap[doctorId] !== branchKey) return false;
     // 1) ma w ogóle slot w grafiku?
     const schedule = schedulesMap[doctorId];
     if (!schedule || !schedule[dayName]) return false;
@@ -250,23 +249,31 @@
 }
     
     async function loadDoctors() {
-      const branchKey = new URLSearchParams(window.location.search).get('lokal');
+      const lokalPar = new URLSearchParams(window.location.search).get('lokal');
+      const branchKey = lokalPar === '1' ? '1' : '2';
       const doctorSelect = document.getElementById('doctor-select');
       doctorSelect.innerHTML = '<option disabled selected>Ładowanie lekarzy...</option>';
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'doctor'), where('branch', '==', branchKey));
-        const snap = await getDocs(q);
-        doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
-        snap.forEach(docSnap => {
-          const d = docSnap.data();
-          const name = d.firstName
-            ? `${d.firstName} ${d.lastName||''}`.trim()
-            : d.email;
-          const opt = document.createElement('option');
-          opt.value       = docSnap.id;
-          opt.textContent = name;
-          opt.dataset.name = name;
-          doctorSelect.append(opt);
+        const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'doctor'),
+      where('branch', '==', branchKey)
+    );
+    const snap = await getDocs(q);
+    doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      // 1) zapisujemy branch w mapie
+      doctorBranchMap[docSnap.id] = d.branch;
+      // 2) reszta jak była:
+      const name = d.firstName
+        ? `${d.firstName} ${d.lastName||''}`.trim()
+        : d.email;
+      const opt = document.createElement('option');
+      opt.value       = docSnap.id;
+      opt.textContent = name;
+      opt.dataset.name = name;
+      doctorSelect.append(opt);
         });
       } catch {
         doctorSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
