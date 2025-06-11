@@ -127,7 +127,7 @@
     async function loadBookingsForDay(dateStr) {
   // czyścimy stare dane
   Object.keys(bookingsMap).forEach(id => delete bookingsMap[id]);
-
+  const branchKey = new URLSearchParams(window.location.search).get('lokal');
   // iterujemy po wszystkich lekarzach z schedulesMap
   await Promise.all(
     Object.keys(schedulesMap)
