@@ -284,6 +284,7 @@ async function loadSchedules() {
   const doctorSelect = document.getElementById('doctor-select');
   // resetujemy wybór
   doctorSelect.value = '';
+  doctorSelect.selectedIndex = 0;
   // dla każdego <option> (poza placeholderem) ustawiamy disabled zgodnie z harmonogramem
   Array.from(doctorSelect.options).forEach(opt => {
     if (!opt.value) return;         // pomijamy „Wybierz lekarza”
