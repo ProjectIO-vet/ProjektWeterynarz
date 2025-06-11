@@ -304,7 +304,7 @@ async function loadSchedules() {
         // brak onclick
       } else {
         btn.textContent = t;
-        btn.onclick = () => {
+        btn.onclick = async () => {
   // 1) zaznacz slot
   document.querySelectorAll('.timeslot-button.selected')
     .forEach(x => x.classList.remove('selected'));
