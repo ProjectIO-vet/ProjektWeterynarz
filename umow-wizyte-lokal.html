@@ -108,7 +108,7 @@
       setDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
+    const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
     // --- Inicjalizacja Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -130,7 +130,7 @@
         return;
       }
 
-      const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
+      
 
 // --- 2) funkcja ładująca dostępności
 async function loadSchedules() {
@@ -231,7 +231,11 @@ async function loadSchedules() {
       flatpickr('#datePicker', {
         dateFormat: 'd-m-Y',
         minDate: 'today',
-        onChange: (_, d) => d && generateTimeSlots(d)
+        onChange: (selectedDates /* Array<Date> */) => {
+        if (selectedDates.length) {
+          generateTimeSlots(selectedDates[0]);
+          }
+          }
       });
 
       let selDate = '', selTime = '';
