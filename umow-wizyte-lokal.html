@@ -208,22 +208,20 @@
     }
     function isAnyDoctorAvailable(dateObj, timeStr) {
   // dateObj to obiekt Date, timeStr np. "09:20"
-  const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
-  const dayName = days[dateObj.getDay()];
   const [h, m] = timeStr.split(':').map(n => +n);
   const tMin = h * 60 + m;
+  const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const dayName = days[dateObj.getDay()];
 
-  // iteruj przez każdego lekarza
-  return Object.values(schedulesMap).some(schedule => {
-    const slot = schedule[dayName];
-    if (!slot) return false;
-    // parse start/end
-    const [sh, sm] = slot.start.split(':').map(n => +n);
-    const [eh, em] = slot.end.split(':').map(n => +n);
+  return Object.keys(schedulesMap).some(doctorId => {
+    // 1) ma w ogóle slot w grafiku?
+    const schedule = schedulesMap[doctorId];
+    if (!schedule || !schedule[dayName]) return false;
+    const { start, end } = schedule[dayName];
+    const [sh, sm] = start.split(':').map(n => +n);
+    const [eh, em] = end.split(':').map(n => +n);
     const startMin = sh * 60 + sm;
     const endMin   = eh * 60 + em;
-    // dostępny jeśli tMin >= startMin i tMin < endMin
-    //return tMin >= startMin && tMin < endMin;
     if (tMin < startMin || tMin >= endMin) return false;
 
     // 2) czy ma już rezerwację w tym czasie?
