@@ -250,10 +250,11 @@
 }
     
     async function loadDoctors() {
+      const branchKey = new URLSearchParams(window.location.search).get('lokal');
       const doctorSelect = document.getElementById('doctor-select');
       doctorSelect.innerHTML = '<option disabled selected>Ładowanie lekarzy...</option>';
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'doctor'));
+        const q = query(collection(db, 'users'), where('role', '==', 'doctor'), where('branch', '==', branchKey));
         const snap = await getDocs(q);
         doctorSelect.innerHTML = '<option disabled selected>Wybierz lekarza</option>';
         snap.forEach(docSnap => {
