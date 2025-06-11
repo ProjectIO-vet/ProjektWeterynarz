@@ -255,9 +255,11 @@ async function loadSchedules() {
       });
 
       let selDate = '', selTime = '';
+      let selDateObj = null;
       window.generateTimeSlots = dateObj => {
   const cont = document.getElementById('timeslots');
   cont.innerHTML = '';
+  selDateObj = dateObj;
   selDate = dateObj.toISOString().slice(0,10); // zapamiętujemy w formacie YYYY-MM-DD
 
   for (let h = 8; h < 18; h++) {
@@ -405,6 +407,9 @@ async function loadSchedules() {
       `Zwierzak: ${petName} (${petSpec})\n` +
       `Rodzaj wizyty: ${visitTypeText}`
     );
+    document.getElementById('booking-details').style.display = 'none';
+  // 2) odśwież sloty ponownie dla tego samego dnia
+  generateTimeSlots(selDateObj);
   } catch (e) {
     console.error(e);
     alert('Błąd rezerwacji: ' + e.message);
