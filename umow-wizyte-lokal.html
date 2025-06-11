@@ -32,6 +32,13 @@
     footer { background:#f4f4f4; padding:20px 0; margin-top:60px; }
     footer .container { display:flex; justify-content:space-between; flex-wrap:wrap; }
     footer p { margin:5px 0; }
+    .timeslot-button.disabled {
+  background: #e0e0e0;
+  color: #888;
+  border-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
   </style>
 </head>
 <body>
@@ -122,9 +129,26 @@
         window.location.href = 'login.html';
         return;
       }
+
+      const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
+
+// --- 2) funkcja ładująca dostępności
+async function loadSchedules() {
+  try {
+    const snap = await getDocs(collection(db, 'schedules'));
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      // zakładam, że data.schedules to obiekt { MONDAY: {start,end}, … }
+      schedulesMap[data.doctorId] = data.schedules || {};
+    });
+  } catch (e) {
+    console.error("Nie udało się wczytać grafiku:", e);
+  }
+}
       currentUserUid = user.uid;
       await loadPets(currentUserUid);
       await loadDoctors();
+      await loadSchedules();
     });
 
     // --- Funkcje pomocnicze ---
@@ -152,7 +176,27 @@
         petSelect.innerHTML = '<option disabled selected>Błąd ładowania</option>';
       }
     }
+    function isAnyDoctorAvailable(dateObj, timeStr) {
+  // dateObj to obiekt Date, timeStr np. "09:20"
+  const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const dayName = days[dateObj.getDay()];
+  const [h, m] = timeStr.split(':').map(n => +n);
+  const tMin = h * 60 + m;
 
+  // iteruj przez każdego lekarza
+  return Object.values(schedulesMap).some(schedule => {
+    const slot = schedule[dayName];
+    if (!slot) return false;
+    // parse start/end
+    const [sh, sm] = slot.start.split(':').map(n => +n);
+    const [eh, em] = slot.end.split(':').map(n => +n);
+    const startMin = sh * 60 + sm;
+    const endMin   = eh * 60 + em;
+    // dostępny jeśli tMin >= startMin i tMin < endMin
+    return tMin >= startMin && tMin < endMin;
+  });
+}
+    
     async function loadDoctors() {
       const doctorSelect = document.getElementById('doctor-select');
       doctorSelect.innerHTML = '<option disabled selected>Ładowanie lekarzy...</option>';
@@ -191,28 +235,38 @@
       });
 
       let selDate = '', selTime = '';
-      window.generateTimeSlots = dateStr => {
-        const cont = document.getElementById('timeslots');
-        cont.innerHTML = '';
-        for (let h = 8; h < 18; h++) {
-          for (let m = 0; m < 60; m += 20) {
-            if (h === 17 && m > 40) break;
-            const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-            const btn = document.createElement('div');
-            btn.className = 'timeslot-button';
-            btn.textContent = t;
-            btn.onclick = () => {
-              document.querySelectorAll('.timeslot-button.selected')
-                .forEach(x => x.classList.remove('selected'));
-              btn.classList.add('selected');
-              document.getElementById('booking-details').style.display = 'block';
-              selDate = dateStr;
-              selTime = t;
-            };
-            cont.append(btn);
-          }
-        }
-      };
+      window.generateTimeSlots = dateObj => {
+  const cont = document.getElementById('timeslots');
+  cont.innerHTML = '';
+  selDate = dateObj.toISOString().slice(0,10); // zapamiętujemy w formacie YYYY-MM-DD
+
+  for (let h = 8; h < 18; h++) {
+    for (let m = 0; m < 60; m += 20) {
+      if (h === 17 && m > 40) break;
+      const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const btn = document.createElement('div');
+      btn.className = 'timeslot-button';
+
+      // jeśli żaden lekarz nie jest dostępny -> disable
+      if (!isAnyDoctorAvailable(dateObj, t)) {
+        btn.classList.add('disabled');
+        btn.textContent = t;
+        // brak onclick
+      } else {
+        btn.textContent = t;
+        btn.onclick = () => {
+          document.querySelectorAll('.timeslot-button.selected')
+            .forEach(x => x.classList.remove('selected'));
+          btn.classList.add('selected');
+          document.getElementById('booking-details').style.display = 'block';
+          selTime = t;
+        };
+      }
+
+      cont.append(btn);
+    }
+  }
+};
 
       // Handler potwierdzenia
       document.getElementById('confirm-appointment').addEventListener('click', async () => {
