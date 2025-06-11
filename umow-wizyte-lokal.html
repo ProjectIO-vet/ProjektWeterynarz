@@ -196,6 +196,22 @@ async function loadSchedules() {
     return tMin >= startMin && tMin < endMin;
   });
 }
+    function isDoctorAvailable(doctorId, dateObj, timeStr) {
+  const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const dayName = days[dateObj.getDay()];
+  const schedule = schedulesMap[doctorId];
+  if (!schedule) return false;
+  const slot = schedule[dayName];
+  if (!slot) return false;
+
+  const [h, m] = timeStr.split(':').map(n => +n);
+  const tMin = h * 60 + m;
+  const [sh, sm] = slot.start.split(':').map(n => +n);
+  const [eh, em] = slot.end.split(':').map(n => +n);
+  const startMin = sh * 60 + sm;
+  const endMin   = eh * 60 + em;
+  return tMin >= startMin && tMin < endMin;
+}
     
     async function loadDoctors() {
       const doctorSelect = document.getElementById('doctor-select');
@@ -264,8 +280,17 @@ async function loadSchedules() {
           btn.classList.add('selected');
           document.getElementById('booking-details').style.display = 'block';
           selTime = t;
-        };
-      }
+          // teraz filtrujemy listę lekarzy:
+  const doctorSelect = document.getElementById('doctor-select');
+  // resetujemy wybór
+  doctorSelect.value = '';
+  // dla każdego <option> (poza placeholderem) ustawiamy disabled zgodnie z harmonogramem
+  Array.from(doctorSelect.options).forEach(opt => {
+    if (!opt.value) return;         // pomijamy „Wybierz lekarza”
+    const ok = isDoctorAvailable(opt.value, dateObj, t);
+    opt.disabled = !ok;
+        });
+      };
 
       cont.append(btn);
     }
