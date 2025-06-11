@@ -223,7 +223,15 @@
     const startMin = sh * 60 + sm;
     const endMin   = eh * 60 + em;
     // dostępny jeśli tMin >= startMin i tMin < endMin
-    return tMin >= startMin && tMin < endMin;
+    //return tMin >= startMin && tMin < endMin;
+    if (tMin < startMin || tMin >= endMin) return false;
+
+    // 2) czy ma już rezerwację w tym czasie?
+    const bookings = bookingsMap[doctorId] || [];
+    const conflict = bookings.some(b =>
+      !(b.endMin < tMin || b.startMin > tMin)
+    );
+    return !conflict;
   });
 }
     function isDoctorAvailable(doctorId, dateObj, timeStr) {
