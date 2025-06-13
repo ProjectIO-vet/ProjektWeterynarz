@@ -71,7 +71,9 @@
       getDoc,
       collection,
       getDocs,
-      deleteDoc
+      deleteDoc,
+      query,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     // Konfiguracja Firebase
@@ -131,6 +133,13 @@
         statusP.textContent = "";
 
         const snap = await getDocs(collection(db, "users", doctorId, "bookings"));
+        const q = query(
+      bookingsRef,
+      orderBy("date", "asc"),
+      orderBy("hour", "asc")
+    );
+    const snap = await getDocs(q);
+        
         snap.forEach(docSnap => {
           const b = docSnap.data();
           const id = docSnap.id;
