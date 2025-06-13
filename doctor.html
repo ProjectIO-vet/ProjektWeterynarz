@@ -290,19 +290,20 @@ await loadClients();
   futureBody.innerHTML = "";
   pastBody.innerHTML   = "";
 
-  snap.docs.forEach(d => {
-    const b = d.data(), tr = document.createElement("tr");
-    const base = `
-      <td>${b.date}</td>
-      <td>${b.hour}${b.endHour?` – ${b.endHour}`:""}</td>
-      <td>${b.petName} (${b.petSpecies})</td>
-      <td>${b.visitType}</td>`;
-    if (b.date >= today) {
-      futureBody.append(tr);
-    } else {
-      pastBody.append(tr);
-    }
-  });
+ snap.docs.forEach(d => {
+  const b = d.data(), tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${b.date}</td>
+    <td>${b.hour}${b.endHour ? ` – ${b.endHour}` : ""}</td>
+    <td>${b.petName} (${b.petSpecies})</td>
+    <td>${b.visitType}</td>
+  `;
+  if (b.date >= today) {
+    futureBody.append(tr);
+  } else {
+    pastBody.append(tr);
+  }
+});
 
   historyStatus.textContent =
     `Przyszłych wizyt: ${futureBody.children.length}, przeszłych: ${pastBody.children.length}.`;
