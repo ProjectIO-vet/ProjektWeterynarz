@@ -76,7 +76,6 @@
         <th>Godzina</th>
         <th>Zwierzak</th>
         <th>Rodzaj</th>
-        <th>Akcja</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -89,7 +88,6 @@
         <th>Godzina</th>
         <th>Zwierzak</th>
         <th>Rodzaj</th>
-        <th>Akcja</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -299,20 +297,6 @@ await loadClients();
       <td>${b.hour}${b.endHour?` – ${b.endHour}`:""}</td>
       <td>${b.petName} (${b.petSpecies})</td>
       <td>${b.visitType}</td>`;
-    if (b.date >= today) {
-      tr.innerHTML = base + `
-        <td>
-          <button class="cancel-btn"
-                  data-id="${d.id}"
-                  data-user="${userId}">
-            Anuluj
-          </button>
-        </td>`;
-      futureBody.append(tr);
-    } else {
-      tr.innerHTML = base + `<td>—</td>`;
-      pastBody.append(tr);
-    }
   });
 
   historyStatus.textContent =
