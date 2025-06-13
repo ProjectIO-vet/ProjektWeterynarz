@@ -96,6 +96,7 @@
       getDocs,
       deleteDoc,
       query,
+      where,
       orderBy
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
@@ -141,19 +142,19 @@
     });
 
     async function initDoctorAppointments() {
-      const tableBody  = document.querySelector("#appointments-table tbody");
-      const statusP    = document.getElementById("appt-status");
-      const doctorId   = auth.currentUser.uid;
-      const bookingsRef = collection(db, "users", doctorId, "bookings");
-      const historyEmailInput = document.getElementById("history-email");
-      const btnShowHistory    = document.getElementById("btn-show-history");
-      const futureBody        = document.querySelector("#future-table tbody");
-      const pastBody          = document.querySelector("#past-table tbody");
-      const historyStatus     = document.getElementById("history-status");
-const clientSearchInput = document.getElementById("client-search");
-const clientsTableBody  = document.querySelector("#clients-table tbody");
-const historySection    = document.getElementById("appointment-history");
-const historyEmailLabel = document.getElementById("history-email-label");
+      const tableBody         = document.querySelector("#appointments-table tbody");
+  const statusP           = document.getElementById("appt-status");
+  const doctorId          = auth.currentUser.uid;
+  const bookingsRef       = collection(db, "users", doctorId, "bookings");
+
+  // Elementy nowej sekcji
+  const clientSearchInput = document.getElementById("client-search");
+  const clientsTableBody  = document.querySelector("#clients-table tbody");
+  const historySection    = document.getElementById("appointment-history");
+  const historyEmailLabel = document.getElementById("history-email-label");
+  const futureBody        = document.querySelector("#future-table tbody");
+  const pastBody          = document.querySelector("#past-table tbody");
+  const historyStatus     = document.getElementById("history-status");
       async function loadAppointments() {
   tableBody.innerHTML = "";
   statusP.textContent = "";
@@ -280,7 +281,6 @@ await loadClients();
 
 
       await loadAppointments();
-      await loadHistory("");
     }
   </script>
 </body>
