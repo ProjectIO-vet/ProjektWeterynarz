@@ -76,7 +76,6 @@
       orderBy
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // Konfiguracja Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
@@ -86,16 +85,14 @@
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
     };
-
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // Elementy DOM
-    const loadingEl    = document.getElementById("loading");
-    const doctorEl     = document.getElementById("doctorContent");
-    const errorEl      = document.getElementById("errorMessage");
-    const logoutBtn    = document.getElementById("logoutBtn");
+    const loadingEl = document.getElementById("loading");
+    const doctorEl  = document.getElementById("doctorContent");
+    const errorEl   = document.getElementById("errorMessage");
+    const logoutBtn = document.getElementById("logoutBtn");
 
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
@@ -107,13 +104,11 @@
         window.location.href = "login.html";
         return;
       }
-
-      // Pobierz profil użytkownika z Firestore
+      // Pobierz rolę z Firestore
       const uSnap = await getDoc(doc(db, "users", user.uid));
       const profile = uSnap.data() || {};
 
       loadingEl.classList.add("hidden");
-
       if (profile.role === "doctor") {
         doctorEl.classList.remove("hidden");
         initDoctorAppointments();
@@ -123,23 +118,23 @@
     });
 
     async function initDoctorAppointments() {
-      const tableBody = document.querySelector("#appointments-table tbody");
-      const statusP   = document.getElementById("appt-status");
-      const doctorId  = auth.currentUser.uid;
+      const tableBody  = document.querySelector("#appointments-table tbody");
+      const statusP    = document.getElementById("appt-status");
+      const doctorId   = auth.currentUser.uid;
+      const bookingsRef = collection(db, "users", doctorId, "bookings");
 
-      // Funkcja ładowania wizyt
       async function loadAppointments() {
         tableBody.innerHTML = "";
         statusP.textContent = "";
 
-        const snap = await getDocs(collection(db, "users", doctorId, "bookings"));
+        // Pobierz posortowane wizyty
         const q = query(
-      bookingsRef,
-      orderBy("date", "asc"),
-      orderBy("hour", "asc")
-    );
-    const snap = await getDocs(q);
-        
+          bookingsRef,
+          orderBy("date",  "asc"),
+          orderBy("hour",  "asc")
+        );
+        const snap = await getDocs(q);
+
         snap.forEach(docSnap => {
           const b = docSnap.data();
           const id = docSnap.id;
@@ -149,28 +144,27 @@
             <td>${b.hour} – ${b.endHour}</td>
             <td>${b.petName} (${b.petSpecies})</td>
             <td>${b.visitType}</td>
-            <td><button class="cancel-btn" data-id="${id}">Anuluj</button></td>
+            <td>
+              <button class="cancel-btn" data-id="${id}" data-user="${b.userId}">
+                Anuluj
+              </button>
+            </td>
           `;
-          // zachowaj userId w dataset
-          tr.querySelector(".cancel-btn").dataset.userId = b.userId;
           tableBody.append(tr);
         });
       }
 
-      // Obsługa kliku "Anuluj"
       tableBody.addEventListener("click", async e => {
         if (!e.target.matches(".cancel-btn")) return;
         const bookingId = e.target.dataset.id;
-        const clientId  = e.target.dataset.userId;
-        if (!confirm("Na pewno chcesz anulować tę wizytę?")) return;
+        const clientId  = e.target.dataset.user;
+        if (!confirm("Na pewno anulować tę wizytę?")) return;
         try {
-          // Usuń wizytę z subkolekcji doktora
+          // usuń wizytę doktora
           await deleteDoc(doc(db, "users", doctorId, "bookings", bookingId));
-          // Usuń wizytę z subkolekcji klienta, jeśli znamy jego ID
-          if (clientId) {
-            await deleteDoc(doc(db, "users", clientId, "bookings", bookingId));
-          }
-          statusP.textContent = "Wizyta została anulowana.";
+          // usuń wizytę klienta
+          await deleteDoc(doc(db, "users", clientId, "bookings", bookingId));
+          statusP.textContent = "Wizyta anulowana.";
           statusP.style.color = "green";
           await loadAppointments();
         } catch (err) {
@@ -180,7 +174,6 @@
         }
       });
 
-      // Pierwsze załadowanie
       await loadAppointments();
     }
   </script>
