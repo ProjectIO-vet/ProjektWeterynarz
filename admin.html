@@ -99,7 +99,15 @@
       addDoc, updateDoc, deleteDoc, query, where
     } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-    const firebaseConfig = { /* ... */ };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
