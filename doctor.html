@@ -41,6 +41,7 @@
         <thead>
           <tr>
             <th>Data</th>
+            <th>Email</th>
             <th>Godzina</th>
             <th>Zwierzak</th>
             <th>Rodzaj wizyty</th>
@@ -124,35 +125,49 @@
       const bookingsRef = collection(db, "users", doctorId, "bookings");
 
       async function loadAppointments() {
-        tableBody.innerHTML = "";
-        statusP.textContent = "";
+  tableBody.innerHTML = "";
+  statusP.textContent = "";
 
-        // Pobierz posortowane wizyty
-        const q = query(
-          bookingsRef,
-          orderBy("date",  "asc"),
-          orderBy("hour",  "asc")
-        );
-        const snap = await getDocs(q);
+  // 1) Pobierz posortowane wizyty
+  const q    = query(
+    bookingsRef,
+    orderBy("date", "asc"),
+    orderBy("hour", "asc")
+  );
+  const snap = await getDocs(q);
 
-        snap.forEach(docSnap => {
-          const b = docSnap.data();
-          const id = docSnap.id;
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${b.date}</td>
-            <td>${b.hour} – ${b.endHour}</td>
-            <td>${b.petName} (${b.petSpecies})</td>
-            <td>${b.visitType}</td>
-            <td>
-              <button class="cancel-btn" data-id="${id}" data-user="${b.userId}">
-                Anuluj
-              </button>
-            </td>
-          `;
-          tableBody.append(tr);
-        });
-      }
+  // 2) Zamapuj snapshot na tablicę obiektów
+  const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // 3) Pobierz wszystkie unikalne userId i wczytaj ich emaile
+  const userIds  = [...new Set(bookings.map(b => b.userId))];
+  const emailMap = {};
+  await Promise.all(userIds.map(async uid => {
+    const udoc = await getDoc(doc(db, "users", uid));
+    emailMap[uid] = udoc.exists() ? udoc.data().email : "<brak>";
+  }));
+
+  // 4) Wyrenderuj wiersze, w tym kolumnę z emailem
+  bookings.forEach(b => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${b.date}</td>
+      <td>${emailMap[b.userId] || ""}</td>
+      <td>${b.hour} – ${b.endHour}</td>
+      <td>${b.petName} (${b.petSpecies})</td>
+      <td>${b.visitType}</td>
+      <td>
+        <button class="cancel-btn"
+                data-id="${b.id}"
+                data-user="${b.userId}">
+          Anuluj
+        </button>
+      </td>
+    `;
+    tableBody.append(tr);
+  });
+}
+
 
       tableBody.addEventListener("click", async e => {
         if (!e.target.matches(".cancel-btn")) return;
