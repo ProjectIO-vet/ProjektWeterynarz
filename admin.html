@@ -104,18 +104,13 @@
     const errorEl = document.getElementById('errorMessage');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    // Wylogowanie
     logoutBtn.addEventListener('click', async () => {
       await signOut(auth);
       window.location.href = 'index.html';
     });
 
-    // Sprawdzenie uprawnień
     onAuthStateChanged(auth, async user => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
+      if (!user) { window.location.href = 'login.html'; return; }
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const data = userDoc.data() || {};
       if (data.role === 'admin') {
@@ -128,11 +123,11 @@
       }
     });
 
-    // ----------------------------------
-    // Zarządzanie grafikiem
-    // ----------------------------------
     async function initScheduleManager() {
       const doctorSelect = document.getElementById('doctor-select-admin');
+      const daySelect = document.getElementById('day-select');
+      const startInput = document.getElementById('start-time');
+      const endInput = document.getElementById('end-time');
       const saveBtn = document.getElementById('save-schedule');
       const statusP = document.getElementById('schedule-status');
 
@@ -144,33 +139,49 @@
       doctorsSnap.forEach(docSnap => {
         const d = docSnap.data();
         const name = d.firstName ? `${d.firstName} ${d.lastName||''}`.trim() : d.email;
-        const opt = document.createElement('option');
-        opt.value = docSnap.id;
-        opt.textContent = name;
+        const opt = document.createElement('option'); opt.value = docSnap.id; opt.textContent = name;
         doctorSelect.append(opt);
       });
+
+      // Funkcja wczytująca grafik
+      async function loadSchedule() {
+        const docId = doctorSelect.value;
+        const day = daySelect.value;
+        if (!docId) return;
+        const snap = await getDoc(doc(db, 'schedules', docId));
+        const sched = snap.exists() ? snap.data().schedules || {} : {};
+        if (sched[day]) {
+          startInput.value = sched[day].start;
+          endInput.value = sched[day].end;
+        } else {
+          startInput.value = '';
+          endInput.value = '';
+        }
+        statusP.textContent = '';
+      }
+
+      doctorSelect.addEventListener('change', loadSchedule);
+      daySelect.addEventListener('change', loadSchedule);
 
       // Zapis grafiku
       saveBtn.addEventListener('click', async () => {
         const docId = doctorSelect.value;
-        const day = document.getElementById('day-select').value;
-        const start = document.getElementById('start-time').value;
-        const end = document.getElementById('end-time').value;
+        const day = daySelect.value;
+        const start = startInput.value;
+        const end = endInput.value;
         if (!docId || !start || !end) {
-          statusP.textContent = 'Uzupełnij wszystkie pola.';
-          statusP.style.color = 'red';
-          return;
+          statusP.textContent = 'Uzupełnij wszystkie pola.'; statusP.style.color = 'red'; return;
         }
         try {
           const ref = doc(db, 'schedules', docId);
-          // Mergujemy pole schedules.day = { start, end }
-          await setDoc(ref, { doctorId: docId, schedules: { [day]: { start, end } } }, { merge: true });
-          statusP.textContent = 'Grafik zapisany.';
-          statusP.style.color = 'green';
+          await setDoc(ref,
+            { doctorId: docId, schedules: { [day]: { start, end } } },
+            { merge: true }
+          );
+          statusP.textContent = 'Grafik zapisany.'; statusP.style.color = 'green';
         } catch (e) {
           console.error(e);
-          statusP.textContent = 'Błąd zapisu: ' + e.message;
-          statusP.style.color = 'red';
+          statusP.textContent = 'Błąd zapisu: ' + e.message; statusP.style.color = 'red';
         }
       });
     }
