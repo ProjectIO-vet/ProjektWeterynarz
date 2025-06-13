@@ -185,6 +185,63 @@
         }
       });
     }
+
+    // Offer Manager
+    async function initOfferManager() {
+      const tableBody = document.querySelector('#offers-table tbody');
+      const nameInput = document.getElementById('offer-name');
+      const durInput = document.getElementById('offer-duration');
+      const addBtn = document.getElementById('add-offer');
+      const statusP = document.getElementById('offer-status');
+
+      // Load offers
+      async function loadOffers() {
+        tableBody.innerHTML = '';
+        const snap = await getDocs(collection(db, 'visitTypes'));
+        snap.forEach(docSnap => {
+          const { name, duration } = docSnap.data();
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            `<td>${name}</td><td>${duration}</td><td>` +
+            `<button class="action-btn" data-id="${docSnap.id}" data-action="edit">Edytuj</button>` +
+            `<button class="action-btn" data-id="${docSnap.id}" data-action="delete">Usuń</button></td>`;
+          tableBody.append(tr);
+        });
+      }
+
+      // Add new
+      addBtn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const duration = parseInt(durInput.value, 10);
+        if (!name || !duration) { statusP.textContent = 'Uzupełnij nazwę i czas.'; statusP.style.color='red'; return; }
+        await addDoc(collection(db, 'visitTypes'), { name, duration });
+        statusP.textContent = 'Dodano ofertę.'; statusP.style.color='green';
+        nameInput.value = '';
+        durInput.value = '';
+        loadOffers();
+      });
+
+      // Edit/Delete delegation
+      tableBody.addEventListener('click', async e => {
+        const btn = e.target;
+        if (!btn.dataset.id) return;
+        const id = btn.dataset.id;
+        if (btn.dataset.action === 'delete') {
+          await deleteDoc(doc(db, 'visitTypes', id));
+          loadOffers();
+        }
+        if (btn.dataset.action === 'edit') {
+          const newName = prompt('Nowa nazwa wizyty:');
+          const newDur = prompt('Nowy czas trwania (min):');
+          if (newName && newDur) {
+            await updateDoc(doc(db, 'visitTypes', id), { name: newName, duration: parseInt(newDur,10) });
+            loadOffers();
+          }
+        }
+      });
+
+      loadOffers();
+    }
   </script>
 </body>
 </html>
