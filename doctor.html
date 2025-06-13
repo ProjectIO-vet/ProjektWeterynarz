@@ -297,6 +297,11 @@ await loadClients();
       <td>${b.hour}${b.endHour?` – ${b.endHour}`:""}</td>
       <td>${b.petName} (${b.petSpecies})</td>
       <td>${b.visitType}</td>`;
+    if (b.date >= today) {
+      futureBody.append(tr);
+    } else {
+      pastBody.append(tr);
+    }
   });
 
   historyStatus.textContent =
