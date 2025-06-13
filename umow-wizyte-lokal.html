@@ -67,10 +67,7 @@
 
       <label for="visit-type">Rodzaj wizyty</label>
       <select id="visit-type">
-        <option value="" disabled selected>Wybierz rodzaj wizyty</option>
-        <option value="kontrola" data-duration="20">Kontrola (20 min)</option>
-        <option value="szczepienie" data-duration="40">Szczepienie (40 min)</option>
-        <option value="zabieg" data-duration="120">Zabieg (120 min)</option>
+        <option value="" disabled selected>Ładowanie...</option>
       </select>
 
       <label for="doctor-select">Wybierz lekarza</label>
@@ -93,7 +90,6 @@
 
   <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- Jeden moduł zawierający Firebase, Flatpickr i całą logikę -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -108,6 +104,7 @@
       setDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
     const schedulesMap = {}; // { doctorId: { MONDAY: {start,end}, … } }
     const bookingsMap  = {};
     const doctorBranchMap = {};
@@ -174,12 +171,34 @@
 // --- 2) funkcja ładująca dostępności
 
       currentUserUid = user.uid;
+      await loadVisitTypes();
       await loadPets(currentUserUid);
       await loadDoctors();
       await loadSchedules();
     });
 
     // --- Funkcje pomocnicze ---
+
+    async function loadVisitTypes() {
+      const vtSel = document.getElementById('visit-type');
+      vtSel.innerHTML = '<option disabled selected>Ładowanie...</option>';
+      try {
+        const snap = await getDocs(collection(db, 'visitTypes'));
+        vtSel.innerHTML = '<option disabled selected>Wybierz rodzaj wizyty</option>';
+        snap.forEach(docSnap => {
+          const { name, duration } = docSnap.data();
+          const opt = document.createElement('option');
+          opt.value = docSnap.id;
+          opt.textContent = `${name} (${duration} min)`;
+          opt.dataset.duration = duration;
+          vtSel.append(opt);
+        });
+      } catch (e) {
+        console.error('Błąd ładowania typów wizyt:', e);
+        vtSel.innerHTML = '<option disabled selected>Błąd ładowania</option>';
+      }
+    }
+    
     async function loadPets(uid) {
       const petSelect = document.getElementById('pet-select');
       petSelect.innerHTML = '<option disabled selected>Ładowanie zwierzaków...</option>';
