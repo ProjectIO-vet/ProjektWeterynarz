@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel Administratora – BKRJ Vet</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    header { background: #333; color: #fff; padding: 15px; text-align: center; }
+    .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+    .hidden { display: none; }
+    .error { color: red; text-align: center; margin-top: 50px; }
+    nav a { color: #fff; margin: 0 10px; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Panel Administratora</h1>
+    <nav>
+      <a href="index.html">Strona główna</a>
+      <button id="logoutBtn" style="cursor:pointer;">Wyloguj</button>
+    </nav>
+  </header>
+
+  <div id="loading" class="container">
+    <p>Sprawdzanie uprawnień…</p>
+  </div>
+
+  <div id="adminContent" class="container hidden">
+    <h2>Witaj w panelu administratora</h2>
+    <p>Tu dodamy funkcje zarządzania użytkownikami, grafikami i wizytami.</p>
+    <!-- dalsze widgety admina -->
+  </div>
+
+  <div id="errorMessage" class="error hidden">
+    <p>Brak dostępu. Tylko administratorzy mogą wchodzić na tę stronę.</p>
+    <a href="index.html">Powrót do strony głównej</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loadingEl = document.getElementById('loading');
+    const adminEl = document.getElementById('adminContent');
+    const errorEl = document.getElementById('errorMessage');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'index.html';
+    });
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        // nie zalogowany → przekierowanie do logowania
+        window.location.href = 'login.html';
+        return;
+      }
+      // pobierz dokument użytkownika
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const data = userDoc.data() || {};
+      if (data.role === 'admin') {
+        // administrator: pokaż zawartość
+        loadingEl.classList.add('hidden');
+        adminEl.classList.remove('hidden');
+      } else {
+        // nie admin: brak dostępu
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
