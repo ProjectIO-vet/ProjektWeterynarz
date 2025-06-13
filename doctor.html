@@ -7,10 +7,17 @@
   <style>
     body { margin:0; font-family:Arial,sans-serif; }
     header { background:#4caf50; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; }
-    nav button, nav a { background:none; border:none; color:#fff; margin-left:10px; cursor:pointer; text-decoration:none; }
+    nav a, nav button { color:#fff; background:none; border:none; margin-left:10px; cursor:pointer; text-decoration:none; }
+    nav a:hover, nav button:hover { text-decoration:underline; }
     .container { max-width:1000px; margin:40px auto; padding:0 20px; }
     .hidden { display:none; }
     .error { color:red; text-align:center; margin-top:50px; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+    th { background:#f4f4f4; }
+    .cancel-btn { padding:4px 8px; background:#d9534f; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+    .cancel-btn:hover { background:#c9302c; }
+    #appt-status { margin-top:10px; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -22,18 +29,30 @@
     </nav>
   </header>
 
-  <!-- ładowanie -->
   <div id="loading" class="container">
     <p>Sprawdzanie uprawnień…</p>
   </div>
 
-  <!-- właściwy panel -->
   <div id="doctorContent" class="container hidden">
-    <h2>Witaj, doktorze!</h2>
-    <p>Tutaj w przyszłości dodamy zarządzanie Twoimi wizytami i grafikiem.</p>
+    <h2>Witaj, Doktorze!</h2>
+    <section id="doctor-appointments">
+      <h3>Moje wizyty</h3>
+      <table id="appointments-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Godzina</th>
+            <th>Zwierzak</th>
+            <th>Rodzaj wizyty</th>
+            <th>Akcja</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="appt-status"></p>
+    </section>
   </div>
 
-  <!-- brak dostępu -->
   <div id="errorMessage" class="container error hidden">
     <p>Brak dostępu. Tylko lekarze mogą wchodzić na tę stronę.</p>
     <a href="index.html">← Powrót do strony głównej</a>
@@ -49,10 +68,13 @@
     import {
       getFirestore,
       doc,
-      getDoc
+      getDoc,
+      collection,
+      getDocs,
+      deleteDoc
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // Twoja konfiguracja Firebase
+    // Konfiguracja Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
       authDomain: "bkrj-vet.firebaseapp.com",
@@ -62,44 +84,96 @@
       appId: "1:289704325759:web:844ebae6cff71bbf40854a",
       measurementId: "G-EH0EC8NKXC"
     };
+
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // elementy
-    const loadingEl     = document.getElementById("loading");
-    const doctorEl      = document.getElementById("doctorContent");
-    const errorEl       = document.getElementById("errorMessage");
-    const logoutButton  = document.getElementById("logoutBtn");
+    // Elementy DOM
+    const loadingEl    = document.getElementById("loading");
+    const doctorEl     = document.getElementById("doctorContent");
+    const errorEl      = document.getElementById("errorMessage");
+    const logoutBtn    = document.getElementById("logoutBtn");
 
-    // wylogowanie
-    logoutButton.addEventListener("click", async () => {
+    logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
     });
 
-    // sprawdzenie stanu logowania i roli
     onAuthStateChanged(auth, async user => {
       if (!user) {
-        // nie zalogowany → do logowania
         window.location.href = "login.html";
         return;
       }
 
-      // pobierz profil z Firestore
+      // Pobierz profil użytkownika z Firestore
       const uSnap = await getDoc(doc(db, "users", user.uid));
       const profile = uSnap.data() || {};
 
       loadingEl.classList.add("hidden");
 
       if (profile.role === "doctor") {
-        // OK – pokaż panel doktora
         doctorEl.classList.remove("hidden");
+        initDoctorAppointments();
       } else {
-        // niewłaściwa rola
         errorEl.classList.remove("hidden");
       }
     });
+
+    async function initDoctorAppointments() {
+      const tableBody = document.querySelector("#appointments-table tbody");
+      const statusP   = document.getElementById("appt-status");
+      const doctorId  = auth.currentUser.uid;
+
+      // Funkcja ładowania wizyt
+      async function loadAppointments() {
+        tableBody.innerHTML = "";
+        statusP.textContent = "";
+
+        const snap = await getDocs(collection(db, "users", doctorId, "bookings"));
+        snap.forEach(docSnap => {
+          const b = docSnap.data();
+          const id = docSnap.id;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${b.date}</td>
+            <td>${b.hour} – ${b.endHour}</td>
+            <td>${b.petName} (${b.petSpecies})</td>
+            <td>${b.visitType}</td>
+            <td><button class="cancel-btn" data-id="${id}">Anuluj</button></td>
+          `;
+          // zachowaj userId w dataset
+          tr.querySelector(".cancel-btn").dataset.userId = b.userId;
+          tableBody.append(tr);
+        });
+      }
+
+      // Obsługa kliku "Anuluj"
+      tableBody.addEventListener("click", async e => {
+        if (!e.target.matches(".cancel-btn")) return;
+        const bookingId = e.target.dataset.id;
+        const clientId  = e.target.dataset.userId;
+        if (!confirm("Na pewno chcesz anulować tę wizytę?")) return;
+        try {
+          // Usuń wizytę z subkolekcji doktora
+          await deleteDoc(doc(db, "users", doctorId, "bookings", bookingId));
+          // Usuń wizytę z subkolekcji klienta, jeśli znamy jego ID
+          if (clientId) {
+            await deleteDoc(doc(db, "users", clientId, "bookings", bookingId));
+          }
+          statusP.textContent = "Wizyta została anulowana.";
+          statusP.style.color = "green";
+          await loadAppointments();
+        } catch (err) {
+          console.error(err);
+          statusP.textContent = "Błąd anulowania: " + err.message;
+          statusP.style.color = "red";
+        }
+      });
+
+      // Pierwsze załadowanie
+      await loadAppointments();
+    }
   </script>
 </body>
 </html>
