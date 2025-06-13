@@ -52,31 +52,26 @@
       </table>
       <p id="appt-status"></p>
     </section>
-    <section id="appointment-history">
-  <h3>Historia wizyt</h3>
-  <label for="history-email">Wyszukaj po e-mailu klienta:</label>
-  <input type="text" id="history-email" placeholder="np. jan.kowalski@poczta.pl" />
-  <button id="btn-show-history">Pokaż historię</button>
 
+    <section id="client-list">
+  <h3>Klienci</h3>
+  <label for="client-search">Wyszukaj klienta (e-mail):</label>
+  <input type="text" id="client-search" placeholder="np. jan.kowalski@poczta.pl" />
+
+  <table id="clients-table">
+    <thead>
+      <tr><th>Email</th><th>Akcja</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+    <section id="appointment-history" class="hidden">
+  <h3>Historia wizyt klienta: <span id="history-email-label"></span></h3>
   <h4>Przyszłe wizyty</h4>
-  <table id="future-table">
-    <thead>
-      <tr>
-        <th>Data</th><th>Email</th><th>Godzina</th><th>Zwierzak</th><th>Rodzaj</th><th>Akcja</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
+  <table id="future-table">…</table>
   <h4>Przeszłe wizyty</h4>
-  <table id="past-table">
-    <thead>
-      <tr>
-        <th>Data</th><th>Email</th><th>Godzina</th><th>Zwierzak</th><th>Rodzaj</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <table id="past-table">…</table>
   <p id="history-status"></p>
 </section>
   </div>
@@ -155,7 +150,10 @@
       const futureBody        = document.querySelector("#future-table tbody");
       const pastBody          = document.querySelector("#past-table tbody");
       const historyStatus     = document.getElementById("history-status");
-
+const clientSearchInput = document.getElementById("client-search");
+const clientsTableBody  = document.querySelector("#clients-table tbody");
+const historySection    = document.getElementById("appointment-history");
+const historyEmailLabel = document.getElementById("history-email-label");
       async function loadAppointments() {
   tableBody.innerHTML = "";
   statusP.textContent = "";
@@ -199,95 +197,87 @@
     tableBody.append(tr);
   });
 }
+async function loadClients(filter = "") {
+  clientsTableBody.innerHTML = "";
+  const snap = await getDocs(collection(db, "users"));
+  snap.forEach(docSnap => {
+    const u = docSnap.data();
+    if (!u.email.toLowerCase().includes(filter.toLowerCase())) return;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.email}</td>
+      <td>
+        <button class="show-history-btn" data-user="${docSnap.id}">
+          Pokaż historię wizyt
+        </button>
+      </td>`;
+    clientsTableBody.append(tr);
+  });
+}
 
-      async function loadHistory(filterEmail) {
+// 2) Po kliknięciu w „Pokaż historię wizyt” — wywołujemy loadHistory dla tego userId
+clientsTableBody.addEventListener("click", e => {
+  if (!e.target.matches(".show-history-btn")) return;
+  const userId = e.target.dataset.user;
+  loadHistoryForUser(userId);
+});
+
+// 3) filtrowanie listy klientów
+clientSearchInput.addEventListener("input", () => {
+  loadClients(clientSearchInput.value.trim());
+});
+
+// na start: pokaż wszystkich klientów
+await loadClients();
+      
+      async function loadHistoryForUser(userId) {
+  // pokaż i ustaw nagłówek
+  historySection.classList.remove("hidden");
+  const userDoc = await getDoc(doc(db,"users",userId));
+  const email   = userDoc.data()?.email || "<brak>";
+  historyEmailLabel.textContent = email;
+
+  // wczytaj wszystkie wizyty danego klienta u tego lekarza
+  const snap = await getDocs(
+    query(
+      collection(db, "users", doctorId, "bookings"),
+      where("userId", "==", userId),
+      orderBy("date", "asc"),
+      orderBy("hour", "asc")
+    )
+  );
+
+  const today = new Date().toISOString().slice(0,10);
   futureBody.innerHTML = "";
   pastBody.innerHTML   = "";
-  historyStatus.textContent = "";
 
-  // 1) pobierz wszystkie wizyty doktora
-  const snap = await getDocs(bookingsRef);
-  const today = new Date().toISOString().slice(0,10);
-
-  // 2) posegmentuj, posortuj, doładuj emaile (jak wcześniej)
-  let bookings = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-  // jeśli filterEmail, zostaw tylko dla danego userId->email
-  if (filterEmail) {
-    // pobierz mapping emailów
-    const uids = [...new Set(bookings.map(b=>b.userId))];
-    const map = {};
-    await Promise.all(uids.map(async uid=>{
-      const udoc = await getDoc(doc(db,"users",uid));
-      map[uid] = udoc.exists()?udoc.data().email:"";
-    }));
-    bookings = bookings.filter(b=> map[b.userId]?.toLowerCase()?.includes(filterEmail.toLowerCase()));
-  }
-
-  // sortowanie rosnąco
-  bookings.sort((a,b)=>{
-    const d = a.date.localeCompare(b.date);
-    return d!==0?d:a.hour.localeCompare(b.hour);
-  });
-
-  // 3) render: przeszłe vs przyszłe
-  // Za każdym razem musimy mieć emailMap jak wcześniej
-  const userIds = [...new Set(bookings.map(b=>b.userId))];
-  const emailMap = {};
-  await Promise.all(userIds.map(async uid=>{
-    const udoc = await getDoc(doc(db,"users",uid));
-    emailMap[uid] = udoc.exists()?udoc.data().email:"";
-  }));
-
-  bookings.forEach(b=>{
-    const tr = document.createElement("tr");
-    const row = `
+  snap.docs.forEach(d => {
+    const b = d.data(), tr = document.createElement("tr");
+    const base = `
       <td>${b.date}</td>
-      <td>${emailMap[b.userId]||""}</td>
-      <td>${b.hour}${b.endHour ? ` – ${b.endHour}` : ""}</td>
+      <td>${b.hour}${b.endHour?` – ${b.endHour}`:""}</td>
       <td>${b.petName} (${b.petSpecies})</td>
-      <td>${b.visitType}</td>
-    `;
+      <td>${b.visitType}</td>`;
     if (b.date >= today) {
-      // przyszłe: z przyciskiem anuluj
-      tr.innerHTML = row + `
+      tr.innerHTML = base + `
         <td>
           <button class="cancel-btn"
-                  data-id="${b.id}"
-                  data-user="${b.userId}">
+                  data-id="${d.id}"
+                  data-user="${userId}">
             Anuluj
           </button>
         </td>`;
       futureBody.append(tr);
     } else {
-      // przeszłe: bez przycisku
-      tr.innerHTML = row + `<td>—</td>`;
+      tr.innerHTML = base + `<td>—</td>`;
       pastBody.append(tr);
     }
   });
 
-  historyStatus.textContent = `Znaleziono ${futureBody.children.length} przyszłych i ${pastBody.children.length} przeszłych wizyt.`;
+  historyStatus.textContent =
+    `Przyszłych wizyt: ${futureBody.children.length}, przeszłych: ${pastBody.children.length}.`;
 }
 
-
-      tableBody.addEventListener("click", async e => {
-        if (!e.target.matches(".cancel-btn")) return;
-        const bookingId = e.target.dataset.id;
-        const clientId  = e.target.dataset.user;
-        if (!confirm("Na pewno anulować tę wizytę?")) return;
-        try {
-          // usuń wizytę doktora
-          await deleteDoc(doc(db, "users", doctorId, "bookings", bookingId));
-          // usuń wizytę klienta
-          await deleteDoc(doc(db, "users", clientId, "bookings", bookingId));
-          statusP.textContent = "Wizyta anulowana.";
-          statusP.style.color = "green";
-          await loadAppointments();
-        } catch (err) {
-          console.error(err);
-          statusP.textContent = "Błąd anulowania: " + err.message;
-          statusP.style.color = "red";
-        }
-      });
 
       await loadAppointments();
       await loadHistory("");
