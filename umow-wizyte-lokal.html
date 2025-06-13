@@ -153,11 +153,9 @@
         );
         const snap = await getDocs(q);
         bookingsMap[doctorId] = snap.docs.map(d => {
-  const data   = d.data();
-  const hour   = data.hour;
-  const endRaw = data.endhour ?? data.endHour;       // ← tu fallback
+  const { hour, endHour } = d.data();           // <-- endhour → endHour
   const [hs, ms] = hour.split(':').map(n=>+n);
-  const [he, me] = endRaw.split(':').map(n=>+n);
+  const [he, me] = endHour.split(':').map(n=>+n);
   return { startMin: hs*60 + ms, endMin: he*60 + me };
 });
     })
@@ -399,10 +397,9 @@
     );
     const snap = await getDocs(q);
     busyMap[docId] = snap.docs.map(d => {
-  const data   = d.data();
+  const data = d.data();
   const [hs, ms] = data.hour.split(':').map(n=>+n);
-  const endRaw   = data.endhour ?? data.endHour;
-  const [he, me] = endRaw.split(':').map(n=>+n);
+  const [he, me] = data.endHour.split(':').map(n=>+n); // <-- endhour → endHour
   return { startMin: hs*60 + ms, endMin: he*60 + me };
 });
 
