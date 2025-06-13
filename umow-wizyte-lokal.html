@@ -339,7 +339,10 @@
   const cont = document.getElementById('timeslots');
   cont.innerHTML = '';
   selDateObj = dateObj;
-  selDate = dateObj.toISOString().slice(0,10); // zapamiętujemy w formacie YYYY-MM-DD
+  const yyyy = dateObj.getFullYear();
+const mm   = String(dateObj.getMonth() + 1).padStart(2,'0');
+const dd   = String(dateObj.getDate()).padStart(2,'0');
+selDate = `${yyyy}-${mm}-${dd}`; // zapamiętujemy w formacie YYYY-MM-DD
   await loadBookingsForDay(selDate);
   for (let h = 8; h < 18; h++) {
     for (let m = 0; m < 60; m += 20) {
