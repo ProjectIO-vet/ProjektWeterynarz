@@ -84,6 +84,17 @@
       <p id="offer-status"></p>
     </section>
 
+    <section id="user-manager">
+      <h3>Zarządzanie użytkownikami</h3>
+      <label for="user-search">Szukaj użytkownika</label>
+      <input type="text" id="user-search" placeholder="Wpisz email lub rolę..." />
+      <table id="users-table">
+        <thead>
+          <tr><th>Email</th><th>Imię</th><th>Rola</th><th>Status</th><th>Akcje</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </div>
 
   <div id="errorMessage" class="error hidden">
@@ -130,6 +141,8 @@
         adminEl.classList.remove('hidden');
         initScheduleManager();
         initOfferManager();
+        initUserManager();
+
       } else {
         loadingEl.classList.add('hidden');
         errorEl.classList.remove('hidden');
@@ -259,6 +272,87 @@
 
       loadOffers();
     }
+
+        // -------- Zarządzanie użytkownikami --------
+    async function initUserManager() {
+      const searchInput = document.getElementById('user-search');
+      const tableBody   = document.querySelector('#users-table tbody');
+      
+      async function loadUsers(filter = '') {
+        tableBody.innerHTML = '';
+        const snap = await getDocs(collection(db, 'users'));
+        snap.forEach(docSnap => {
+          const u = docSnap.data();
+          const id = docSnap.id;
+          const name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+          const role = u.role || '';
+          const status = u.disabled ? 'Zablokowany' : 'Aktywny';
+          const text = `${u.email} ${name} ${role}`.toLowerCase();
+          if (filter && !text.includes(filter)) return;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${u.email}</td>
+            <td>${name}</td>
+            <td>${role}</td>
+            <td>${status}</td>
+            <td>
+              <button class="action-btn" data-id="${id}" data-action="toggle">
+                ${u.disabled ? 'Odblokuj' : 'Zablokuj'}
+              </button>
+              <button class="action-btn" data-id="${id}" data-action="reset">
+                Reset hasła
+              </button>
+              <button class="action-btn" data-id="${id}" data-action="role">
+                Zmień rolę
+              </button>
+              <button class="action-btn" data-id="${id}" data-action="delete">
+                Usuń
+              </button>
+            </td>
+          `;
+          tableBody.append(tr);
+        });
+      }
+
+      searchInput.addEventListener('input', () => loadUsers(searchInput.value));
+
+      tableBody.addEventListener('click', async e => {
+        const btn = e.target;
+        const id  = btn.dataset.id;
+        if (!id) return;
+        const uRef = doc(db, 'users', id);
+        
+        if (btn.dataset.action === 'toggle') {
+          const uDoc = await getDoc(uRef);
+          await updateDoc(uRef, { disabled: !uDoc.data().disabled });
+          loadUsers(searchInput.value);
+        }
+        if (btn.dataset.action === 'reset') {
+          const uDoc = await getDoc(uRef);
+          await sendPasswordResetEmail(auth, uDoc.data().email);
+          alert('Link do resetu hasła wysłany.');
+        }
+        if (btn.dataset.action === 'role') {
+          const uDoc   = await getDoc(uRef);
+          const newRole = prompt('Podaj nową rolę (admin, doctor, receptionist):', uDoc.data().role);
+          if (newRole) {
+            await updateDoc(uRef, { role: newRole });
+            loadUsers(searchInput.value);
+          }
+        }
+        if (btn.dataset.action === 'delete') {
+          if (confirm('Na pewno usunąć użytkownika?')) {
+            await deleteDoc(uRef);
+            loadUsers(searchInput.value);
+          }
+        }
+      });
+
+      // pierwsze załadowanie listy
+      loadUsers();
+    }
+
   </script>
 </body>
 </html>
