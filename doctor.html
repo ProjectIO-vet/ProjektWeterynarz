@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel Doktora – BKRJ Vet</title>
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; }
+    header { background:#4caf50; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; }
+    nav button, nav a { background:none; border:none; color:#fff; margin-left:10px; cursor:pointer; text-decoration:none; }
+    .container { max-width:1000px; margin:40px auto; padding:0 20px; }
+    .hidden { display:none; }
+    .error { color:red; text-align:center; margin-top:50px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Panel Doktora</h1>
+    <nav>
+      <a href="index.html">Strona główna</a>
+      <button id="logoutBtn">Wyloguj</button>
+    </nav>
+  </header>
+
+  <!-- ładowanie -->
+  <div id="loading" class="container">
+    <p>Sprawdzanie uprawnień…</p>
+  </div>
+
+  <!-- właściwy panel -->
+  <div id="doctorContent" class="container hidden">
+    <h2>Witaj, doktorze!</h2>
+    <p>Tutaj w przyszłości dodamy zarządzanie Twoimi wizytami i grafikiem.</p>
+  </div>
+
+  <!-- brak dostępu -->
+  <div id="errorMessage" class="container error hidden">
+    <p>Brak dostępu. Tylko lekarze mogą wchodzić na tę stronę.</p>
+    <a href="index.html">← Powrót do strony głównej</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // Twoja konfiguracja Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // elementy
+    const loadingEl     = document.getElementById("loading");
+    const doctorEl      = document.getElementById("doctorContent");
+    const errorEl       = document.getElementById("errorMessage");
+    const logoutButton  = document.getElementById("logoutBtn");
+
+    // wylogowanie
+    logoutButton.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+
+    // sprawdzenie stanu logowania i roli
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        // nie zalogowany → do logowania
+        window.location.href = "login.html";
+        return;
+      }
+
+      // pobierz profil z Firestore
+      const uSnap = await getDoc(doc(db, "users", user.uid));
+      const profile = uSnap.data() || {};
+
+      loadingEl.classList.add("hidden");
+
+      if (profile.role === "doctor") {
+        // OK – pokaż panel doktora
+        doctorEl.classList.remove("hidden");
+      } else {
+        // niewłaściwa rola
+        errorEl.classList.remove("hidden");
+      }
+    });
+  </script>
+</body>
+</html>
