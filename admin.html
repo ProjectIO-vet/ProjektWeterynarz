@@ -12,14 +12,16 @@
     .error { color: red; text-align: center; margin-top: 50px; }
     nav a, nav button { color: #fff; background: none; border: none; margin: 0 10px; font-size: 1rem; cursor: pointer; }
     nav a:hover, nav button:hover { text-decoration: underline; }
-    /* Schedule manager styles */
-    #schedule-manager { margin-top: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background: #fafafa; }
-    #schedule-manager h3 { margin-top: 0; color: #4caf50; }
-    #schedule-manager label { display: block; margin: 10px 0 5px; font-weight: bold; }
-    #schedule-manager select, #schedule-manager input { width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-    #schedule-manager button { margin-top: 15px; padding: 10px 20px; background: #4caf50; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-    #schedule-manager button:hover { background: #388e3c; }
-    #schedule-status { margin-top: 10px; }
+    section { margin-top: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background: #fafafa; }
+    section h3 { margin-top: 0; color: #4caf50; }
+    label { display: block; margin: 10px 0 5px; font-weight: bold; }
+    select, input, button { width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    button { margin-top: 10px; background: #4caf50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #388e3c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 8px; text-align: left; }
+    .action-btn { margin-right: 5px; padding: 5px 10px; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -37,7 +39,7 @@
 
   <div id="adminContent" class="container hidden">
     <h2>Witaj w panelu administratora</h2>
-    <p>Tu możesz zarządzać godzinami pracy lekarzy oraz innymi zasobami.</p>
+    <p>Tu możesz zarządzać godzinami pracy lekarzy oraz ofertą wizyt.</p>
 
     <section id="schedule-manager">
       <h3>Zarządzanie grafikiem lekarzy</h3>
@@ -65,6 +67,23 @@
       <p id="schedule-status"></p>
     </section>
 
+    <section id="offer-manager">
+      <h3>Zarządzanie ofertą wizyt</h3>
+      <table id="offers-table">
+        <thead>
+          <tr><th>Nazwa</th><th>Czas (min)</th><th>Akcje</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h4>Dodaj nową ofertę</h4>
+      <label for="offer-name">Nazwa wizyty</label>
+      <input type="text" id="offer-name" />
+      <label for="offer-duration">Czas trwania (min)</label>
+      <input type="number" id="offer-duration" min="1" />
+      <button id="add-offer">Dodaj ofertę</button>
+      <p id="offer-status"></p>
+    </section>
+
   </div>
 
   <div id="errorMessage" class="error hidden">
@@ -76,29 +95,14 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
     import {
-      getFirestore,
-      doc,
-      getDoc,
-      collection,
-      getDocs,
-      setDoc,
-      query,
-      where
+      getFirestore, doc, getDoc, collection, getDocs, setDoc,
+      addDoc, updateDoc, deleteDoc, query, where
     } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
-      authDomain: "bkrj-vet.firebaseapp.com",
-      projectId: "bkrj-vet",
-      storageBucket: "bkrj-vet.firebasestorage.app",
-      messagingSenderId: "289704325759",
-      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
-      measurementId: "G-EH0EC8NKXC"
-    };
+    const firebaseConfig = { /* ... */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
     const loadingEl = document.getElementById('loading');
     const adminEl = document.getElementById('adminContent');
     const errorEl = document.getElementById('errorMessage');
@@ -117,6 +121,7 @@
         loadingEl.classList.add('hidden');
         adminEl.classList.remove('hidden');
         initScheduleManager();
+        initOfferManager();
       } else {
         loadingEl.classList.add('hidden');
         errorEl.classList.remove('hidden');
@@ -131,7 +136,6 @@
       const saveBtn = document.getElementById('save-schedule');
       const statusP = document.getElementById('schedule-status');
 
-      // Załaduj lekarzy
       const doctorsSnap = await getDocs(
         query(collection(db, 'users'), where('role', '==', 'doctor'))
       );
@@ -139,11 +143,12 @@
       doctorsSnap.forEach(docSnap => {
         const d = docSnap.data();
         const name = d.firstName ? `${d.firstName} ${d.lastName||''}`.trim() : d.email;
-        const opt = document.createElement('option'); opt.value = docSnap.id; opt.textContent = name;
+        const opt = document.createElement('option');
+        opt.value = docSnap.id;
+        opt.textContent = name;
         doctorSelect.append(opt);
       });
 
-      // Funkcja wczytująca grafik
       async function loadSchedule() {
         const docId = doctorSelect.value;
         const day = daySelect.value;
@@ -163,30 +168,32 @@
       doctorSelect.addEventListener('change', loadSchedule);
       daySelect.addEventListener('change', loadSchedule);
 
-      // Zapis grafiku
       saveBtn.addEventListener('click', async () => {
         const docId = doctorSelect.value;
         const day = daySelect.value;
         const start = startInput.value;
         const end = endInput.value;
         if (!docId || !start || !end) {
-          statusP.textContent = 'Uzupełnij wszystkie pola.'; statusP.style.color = 'red'; return;
+          statusP.textContent = 'Uzupełnij wszystkie pola.';
+          statusP.style.color = 'red';
+          return;
         }
         try {
-          const ref = doc(db, 'schedules', docId);
-          await setDoc(ref,
+          await setDoc(
+            doc(db, 'schedules', docId),
             { doctorId: docId, schedules: { [day]: { start, end } } },
             { merge: true }
           );
-          statusP.textContent = 'Grafik zapisany.'; statusP.style.color = 'green';
+          statusP.textContent = 'Grafik zapisany.';
+          statusP.style.color = 'green';
         } catch (e) {
           console.error(e);
-          statusP.textContent = 'Błąd zapisu: ' + e.message; statusP.style.color = 'red';
+          statusP.textContent = 'Błąd zapisu: ' + e.message;
+          statusP.style.color = 'red';
         }
       });
     }
 
-    // Offer Manager
     async function initOfferManager() {
       const tableBody = document.querySelector('#offers-table tbody');
       const nameInput = document.getElementById('offer-name');
@@ -194,7 +201,6 @@
       const addBtn = document.getElementById('add-offer');
       const statusP = document.getElementById('offer-status');
 
-      // Load offers
       async function loadOffers() {
         tableBody.innerHTML = '';
         const snap = await getDocs(collection(db, 'visitTypes'));
@@ -209,19 +215,22 @@
         });
       }
 
-      // Add new
       addBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         const duration = parseInt(durInput.value, 10);
-        if (!name || !duration) { statusP.textContent = 'Uzupełnij nazwę i czas.'; statusP.style.color='red'; return; }
+        if (!name || !duration) {
+          statusP.textContent = 'Uzupełnij nazwę i czas.';
+          statusP.style.color = 'red';
+          return;
+        }
         await addDoc(collection(db, 'visitTypes'), { name, duration });
-        statusP.textContent = 'Dodano ofertę.'; statusP.style.color='green';
+        statusP.textContent = 'Dodano ofertę.';
+        statusP.style.color = 'green';
         nameInput.value = '';
         durInput.value = '';
         loadOffers();
       });
 
-      // Edit/Delete delegation
       tableBody.addEventListener('click', async e => {
         const btn = e.target;
         if (!btn.dataset.id) return;
