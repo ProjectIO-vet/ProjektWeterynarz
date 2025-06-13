@@ -300,6 +300,25 @@ await loadClients();
   historyStatus.textContent =
     `Przyszłych wizyt: ${futureBody.children.length}, przeszłych: ${pastBody.children.length}.`;
 }
+tableBody.addEventListener("click", async e => {
+  if (!e.target.matches(".cancel-btn")) return;
+  const bookingId = e.target.dataset.id;
+  const clientId  = e.target.dataset.user;
+
+  if (!confirm("Na pewno anulować tę wizytę?")) return;
+  try {
+    await deleteDoc(doc(db, "users", doctorId, "bookings", bookingId));
+    if (clientId) {
+      await deleteDoc(doc(db, "users", clientId, "bookings", bookingId));
+    }
+    statusP.textContent = "Wizyta anulowana.";
+    statusP.style.color = "green";
+    await loadAppointments();
+  } catch (err) {
+    statusP.textContent = "Błąd anulowania: " + err.message;
+    statusP.style.color = "red";
+  }
+});
 
 
       await loadAppointments();
