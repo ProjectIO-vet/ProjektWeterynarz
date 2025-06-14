@@ -113,22 +113,27 @@
     <div class="link">
       <a href="rejestracja.html">Nie masz konta? Zarejestruj się</a>
     </div>
+
+    <!-- Link do resetu hasła -->
+    <div class="link">
+      <a href="#" id="reset-password-link">Nie pamiętasz hasła? Zresetuj je</a>
+    </div>
   </div>
 
-  <!-- Firebase SDK + logika logowania -->
+  <!-- Firebase SDK + logika logowania i resetu hasła -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import {
       getAuth,
       signInWithEmailAndPassword,
-      signOut
+      signOut,
+      sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
     import {
-  getFirestore,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
@@ -144,13 +149,13 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-
     const loginForm    = document.getElementById('login-form');
     const errorMessage = document.getElementById('error-message');
+    const resetLink    = document.getElementById('reset-password-link');
 
+    // Logowanie
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
@@ -159,45 +164,46 @@
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
+        const uDoc = await getDoc(doc(db, 'users', cred.user.uid));
+        const data = uDoc.data() || {};
 
-    // 2) pobieramy profil Firestore
-    const uDoc = await getDoc(doc(db, 'users', cred.user.uid));
-    const data = uDoc.data() || {};
-
-    // 3) jeśli disabled → wyloguj i pokaż komunikat
-    if (data.disabled) {
-      await signOut(auth);
-      errorMessage.textContent = 'To konto jest zablokowane. Skontaktuj się z administratorem.';
-      errorMessage.style.display = 'block';
-      return;
-    }
-        // Po zalogowaniu przekieruj na stronę główną:
+        if (data.disabled) {
+          await signOut(auth);
+          errorMessage.textContent = 'To konto jest zablokowane. Skontaktuj się z administratorem.';
+          errorMessage.style.display = 'block';
+          return;
+        }
         window.location.href = "index.html";
       } catch (error) {
-        // Przyjazne komunikaty błędów
         let msg;
         switch (error.code) {
-          case "auth/user-not-found":
-            msg = "Konto o tym adresie e-mail nie istnieje.";
-            break;
-          case "auth/wrong-password":
-            msg = "Niepoprawne hasło.";
-            break;
-          case "auth/invalid-email":
-            msg = "Adres e-mail jest nieprawidłowy.";
-            break;
-          case "auth/user-disabled":
-            msg = "To konto zostało zablokowane.";
-            break;
-          case "auth/invalid-login-credentials":
-            msg = "Niepoprawny e-mail lub hasło.";
-            break;
-          default:
-            // Domyślnie: nie ujawniamy surowego komunikatu Firebase
-            msg = "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.";
+          case "auth/user-not-found": msg = "Konto o tym adresie e-mail nie istnieje."; break;
+          case "auth/wrong-password": msg = "Niepoprawne hasło."; break;
+          case "auth/invalid-email": msg = "Adres e-mail jest nieprawidłowy."; break;
+          case "auth/user-disabled": msg = "To konto zostało zablokowane."; break;
+          default: msg = "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.";
         }
         errorMessage.textContent = msg;
         errorMessage.style.display = 'block';
+      }
+    });
+
+    // Reset hasła
+    resetLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = prompt('Podaj swój adres e-mail, aby zresetować hasło:');
+      if (!email) return;
+      try {
+        await sendPasswordResetEmail(auth, email.trim());
+        alert('Link do resetowania hasła został wysłany na Twój e-mail.');
+      } catch (error) {
+        let msg;
+        switch (error.code) {
+          case 'auth/invalid-email': msg = 'Adres e-mail jest nieprawidłowy.'; break;
+          case 'auth/user-not-found': msg = 'Konto o tym adresie e-mail nie istnieje.'; break;
+          default: msg = 'Wystąpił błąd. Spróbuj ponownie później.';
+        }
+        alert(msg);
       }
     });
   </script>
