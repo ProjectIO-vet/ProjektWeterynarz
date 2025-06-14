@@ -46,6 +46,10 @@
 
   <div class="container">
     <h2>Moje wizyty</h2>
+    <nav class="page-nav">
+      <a href="umow-wizyte.html">Umów wizytę</a>
+      <a href="moje-wizyty.html" class="active">Moje wizyty</a>
+    </nav>
 
     <div class="section">
       <h3>Nadchodzące wizyty</h3>
@@ -98,7 +102,6 @@
         return;
       }
 
-      // Pobranie wizyt z subkolekcji, posortowane chronologicznie
       const bookingsRef = collection(db, 'users', user.uid, 'bookings');
       const q = query(
         bookingsRef,
@@ -136,7 +139,10 @@
           btn.textContent = 'Anuluj';
           btn.addEventListener('click', async () => {
             if (confirm('Czy na pewno chcesz anulować tę wizytę?')) {
+              // Usuwamy wizytę u użytkownika
               await deleteDoc(doc(db, 'users', user.uid, 'bookings', id));
+              // Usuwamy wizytę u doktora
+              await deleteDoc(doc(db, 'users', data.doctorId, 'bookings', id));
               li.remove();
             }
           });
