@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moje wizyty | BKRJ Vet</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f7f7; color: #333; }
+    .container { max-width: 800px; margin: 60px auto; background: #fff; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; }
+    h2 { text-align: center; color: #4CAF50; margin-bottom: 20px; }
+    nav { text-align: center; margin-bottom: 30px; }
+    nav a { margin: 0 15px; color: #4CAF50; text-decoration: none; font-weight: bold; }
+    nav a:hover { text-decoration: underline; }
+    .section { margin-bottom: 30px; }
+    .visit-list { list-style: none; padding: 0; }
+    .visit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+    .visit-item:last-child { border-bottom: none; }
+    .visit-info { font-size: 14px; }
+    .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-cancel { background: #d8000c; color: #fff; }
+    .btn-cancel:hover { background: #b30009; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Moje wizyty</h2>
+    <nav>
+      <a href="umow-wizyte.html">Umów wizytę</a>
+      <a href="moje-wizyty.html">Moje wizyty</a>
+    </nav>
+    <div class="section">
+      <h3>Nadchodzące wizyty</h3>
+      <ul id="upcoming-list" class="visit-list">
+        <!-- dynamicznie wypełniane -->
+      </ul>
+    </div>
+    <div class="section">
+      <h3>Przeszłe wizyty</h3>
+      <ul id="past-list" class="visit-list">
+        <!-- dynamicznie wypełniane -->
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const upcomingList = document.getElementById('upcoming-list');
+    const pastList     = document.getElementById('past-list');
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      const now = Timestamp.now();
+      // Pobieramy wszystkie wizyty użytkownika
+      const visitsRef = collection(db, 'visits');
+      const q = query(visitsRef, where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const date = data.date.toDate();
+        const info = `${date.toLocaleDateString()} o ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} – ${data.service}`;
+        const li = document.createElement('li');
+        li.classList.add('visit-item');
+        const span = document.createElement('span');
+        span.classList.add('visit-info');
+        span.textContent = info;
+
+        if (data.date >= now) {
+          // przyszła wizyta
+          const btn = document.createElement('button');
+          btn.classList.add('btn', 'btn-cancel');
+          btn.textContent = 'Anuluj';
+          btn.addEventListener('click', async () => {
+            if (confirm('Czy na pewno chcesz anulować tę wizytę?')) {
+              await deleteDoc(doc(db, 'visits', id));
+              li.remove();
+            }
+          });
+          li.append(span, btn);
+          upcomingList.append(li);
+        } else {
+          // przeszła wizyta
+          li.append(span);
+          pastList.append(li);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
