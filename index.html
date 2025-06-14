@@ -137,6 +137,7 @@ button:hover {
         <!-- Nadajemy id, aby skrypt JS mógł to ukrywać/pokazywać -->
         <a href="index.html">Strona główna</a>
         <a href="umow-wizyte.html" id="nav-umow">Umów wizytę</a>
+        <a href="moje-wizyty.html" id="nav-wizyta" style="display: none;">Moje wizyty</a>
         <a href="rejestracja.html" id="nav-rejestracja">Rejestracja</a>
         <a href="login.html" id="nav-logowanie">Logowanie</a>
         <a href="#about">O nas</a>
@@ -229,7 +230,8 @@ button:hover {
       const linkRejestracja = document.getElementById('nav-rejestracja');
       const linkLogowanie   = document.getElementById('nav-logowanie');
       const linkKonto       = document.getElementById('nav-konto');
-
+      const linkWizyta       = document.getElementById('nav-wizyta');
+      
       if (user) {
         // Użytkownik zalogowany → ukrywamy Rejestrację i Logowanie
         linkRejestracja.style.display = 'none';
@@ -238,6 +240,7 @@ button:hover {
         logoutButton.style.display = 'inline-block';
         // Pokaż „Moje Konto”
         linkKonto.style.display = 'inline-block';
+        linkWizyta.style.display = 'inline-block';
       } else {
         // Użytkownik wylogowany → pokazujemy Rejestrację i Logowanie
         linkRejestracja.style.display = 'inline-block';
@@ -246,6 +249,7 @@ button:hover {
         logoutButton.style.display = 'none';
         // Ukrywamy „Moje Konto”
         linkKonto.style.display = 'none';
+        linkWizyta.style.display = 'none';
       }
     });
 
