@@ -71,8 +71,8 @@
       }
       const now = Timestamp.now();
       // Pobieramy wszystkie wizyty użytkownika
-      const visitsRef = collection(db, 'visits');
-      const q = query(visitsRef, where('userId', '==', user.uid));
+      const bookingsRef = collection(db, 'users', user.uid, 'bookings');
+      const q = query(bookingsRef, where('userId', '==', user.uid));
       const snapshot = await getDocs(q);
 
       snapshot.forEach(docSnap => {
@@ -93,7 +93,7 @@
           btn.textContent = 'Anuluj';
           btn.addEventListener('click', async () => {
             if (confirm('Czy na pewno chcesz anulować tę wizytę?')) {
-              await deleteDoc(doc(db, 'visits', id));
+              await deleteDoc(doc(db, 'bookings', id));
               li.remove();
             }
           });
