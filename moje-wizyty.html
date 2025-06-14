@@ -30,15 +30,11 @@
     </nav>
     <div class="section">
       <h3>Nadchodzące wizyty</h3>
-      <ul id="upcoming-list" class="visit-list">
-        <!-- dynamicznie wypełniane -->
-      </ul>
+      <ul id="upcoming-list" class="visit-list"></ul>
     </div>
     <div class="section">
       <h3>Przeszłe wizyty</h3>
-      <ul id="past-list" class="visit-list">
-        <!-- dynamicznie wypełniane -->
-      </ul>
+      <ul id="past-list" class="visit-list"></ul>
     </div>
   </div>
 
@@ -69,8 +65,11 @@
         window.location.href = 'login.html';
         return;
       }
-      const now = Timestamp.now();
-      // Pobieramy wszystkie wizyty użytkownika
+
+      const nowTs = Timestamp.now();
+      const nowDate = nowTs.toDate();
+
+      // Ścieżka do subkolekcji bookings
       const bookingsRef = collection(db, 'users', user.uid, 'bookings');
       const q = query(bookingsRef, where('userId', '==', user.uid));
       const snapshot = await getDocs(q);
@@ -78,29 +77,39 @@
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
         const id = docSnap.id;
-        const date = data.date.toDate();
-        const info = `${date.toLocaleDateString()} o ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} – ${data.service}`;
+
+        // Konwersja daty wizyty
+        let visitDate;
+        if (data.date && typeof data.date.toDate === 'function') {
+          visitDate = data.date.toDate();
+        } else {
+          visitDate = new Date(data.date);
+        }
+
+        const info = `${visitDate.toLocaleDateString()} o ${visitDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} – ${data.service}`;
+
         const li = document.createElement('li');
         li.classList.add('visit-item');
+
         const span = document.createElement('span');
         span.classList.add('visit-info');
         span.textContent = info;
 
-        if (data.date >= now) {
-          // przyszła wizyta
+        // Sprawdzamy, czy wizyta jest przyszła czy przeszła
+        if (visitDate >= nowDate) {
           const btn = document.createElement('button');
           btn.classList.add('btn', 'btn-cancel');
           btn.textContent = 'Anuluj';
           btn.addEventListener('click', async () => {
             if (confirm('Czy na pewno chcesz anulować tę wizytę?')) {
-              await deleteDoc(doc(db, 'bookings', id));
+              // Poprawna ścieżka do dokumentu w subkolekcji
+              await deleteDoc(doc(db, 'users', user.uid, 'bookings', id));
               li.remove();
             }
           });
           li.append(span, btn);
           upcomingList.append(li);
         } else {
-          // przeszła wizyta
           li.append(span);
           pastList.append(li);
         }
