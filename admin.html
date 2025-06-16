@@ -269,9 +269,13 @@
           loadOffers();
         }
         if (btn.dataset.action === 'edit') {
-          const newName = prompt('Nowa nazwa wizyty:');
-          const newDur = prompt('Nowy czas trwania (min):');
-          const newPrice= prompt('Nowa cena (PLN):', b.price);
+          const docRef = doc(db, 'visitTypes', id);
+          const snap   = await getDoc(docRef);
+          const b      = snap.data();
+          
+          const newName  = prompt('Nowa nazwa wizyty:', b.name);
+          const newDur   = prompt('Nowy czas trwania (min):', b.duration);
+          const newPrice = prompt('Nowa cena (PLN):', b.price);
           if (newName && newDur) {
             await updateDoc(doc(db, 'visitTypes', id), { name: newName, duration: parseInt(newDur,10), price: parseFloat(newPrice) });
             loadOffers();
