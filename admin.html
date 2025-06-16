@@ -233,7 +233,7 @@
         tableBody.innerHTML = '';
         const snap = await getDocs(collection(db, 'visitTypes'));
         snap.forEach(docSnap => {
-          const { name, duration } = docSnap.data();
+          const { name, duration, price } = docSnap.data();
           const tr = document.createElement('tr');
           tr.innerHTML =
             `<td>${name}</td><td>${duration}</td><td>${price != null ? price.toFixed(2) : '-'}</td><td>` +
