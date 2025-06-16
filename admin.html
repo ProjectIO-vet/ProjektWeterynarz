@@ -71,7 +71,7 @@
       <h3>Zarządzanie ofertą wizyt</h3>
       <table id="offers-table">
         <thead>
-          <tr><th>Nazwa</th><th>Czas (min)</th><th>Akcje</th></tr>
+          <tr><th>Nazwa</th><th>Czas (min)</th><th>Cena (PLN)</th><th>Akcje</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -80,6 +80,7 @@
       <input type="text" id="offer-name" />
       <label for="offer-duration">Czas trwania (min)</label>
       <input type="number" id="offer-duration" min="1" />
+      <input type="number" id="offer-price" min="0" step="0.01" />
       <button id="add-offer">Dodaj ofertę</button>
       <p id="offer-status"></p>
     </section>
@@ -234,7 +235,7 @@
           const { name, duration } = docSnap.data();
           const tr = document.createElement('tr');
           tr.innerHTML =
-            `<td>${name}</td><td>${duration}</td><td>` +
+            `<td>${name}</td><td>${duration}</td><td>${price != null ? price.toFixed(2) : '-'}</td><td>` +
             `<button class="action-btn" data-id="${docSnap.id}" data-action="edit">Edytuj</button>` +
             `<button class="action-btn" data-id="${docSnap.id}" data-action="delete">Usuń</button></td>`;
           tableBody.append(tr);
@@ -244,12 +245,13 @@
       addBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         const duration = parseInt(durInput.value, 10);
+        const price = parseFloat(document.getElementById('offer-price').value);
         if (!name || !duration) {
           statusP.textContent = 'Uzupełnij nazwę i czas.';
           statusP.style.color = 'red';
           return;
         }
-        await addDoc(collection(db, 'visitTypes'), { name, duration });
+        await addDoc(collection(db, 'visitTypes'), { name, duration, price });
         statusP.textContent = 'Dodano ofertę.';
         statusP.style.color = 'green';
         nameInput.value = '';
@@ -268,8 +270,9 @@
         if (btn.dataset.action === 'edit') {
           const newName = prompt('Nowa nazwa wizyty:');
           const newDur = prompt('Nowy czas trwania (min):');
+          const newPrice= prompt('Nowa cena (PLN):', b.price);
           if (newName && newDur) {
-            await updateDoc(doc(db, 'visitTypes', id), { name: newName, duration: parseInt(newDur,10) });
+            await updateDoc(doc(db, 'visitTypes', id), { name: newName, duration: parseInt(newDur,10), price: parseFloat(newPrice) });
             loadOffers();
           }
         }
