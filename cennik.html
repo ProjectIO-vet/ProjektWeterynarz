@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cennik | BKRJ Vet</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f7f7f7; color: #333; }
+    header { background: #4CAF50; color: #fff; padding: 15px 0; }
+    .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .navbar a { color: #fff; text-decoration: none; margin: 0 10px; font-weight: bold; }
+    .navbar a:hover { text-decoration: underline; }
+    .navbar a.active { text-decoration: underline; }
+
+    .container { max-width: 800px; margin: 40px auto; padding: 0 20px; background: #fff; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #4CAF50; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <div class="logo"><h1>BKRJ Vet</h1></div>
+      <nav>
+        <a href="index.html">Strona główna</a>
+        <a href="umow-wizyte.html">Umów wizytę</a>
+        <a href="moje-wizyty.html">Moje wizyty</a>
+        <a href="cennik.html" class="active">Cennik</a>
+        <a href="#about">O nas</a>
+        <a href="#contact">Kontakt</a>
+        <a href="konto.html">Moje Konto</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <h2>Cennik usług</h2>
+    <table id="price-table">
+      <thead>
+        <tr>
+          <th>Nazwa wizyty</th>
+          <th>Czas (min)</th>
+          <th>Cena (PLN)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Wiersze wygenerowane dynamicznie -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // Konfiguracja Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZoVVfUPSyS7zELBqEsLNYuVdBqfSq-BE",
+      authDomain: "bkrj-vet.firebaseapp.com",
+      projectId: "bkrj-vet",
+      storageBucket: "bkrj-vet.firebasestorage.app",
+      messagingSenderId: "289704325759",
+      appId: "1:289704325759:web:844ebae6cff71bbf40854a",
+      measurementId: "G-EH0EC8NKXC"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.querySelector("#price-table tbody");
+
+    async function loadPriceList() {
+      try {
+        const snap = await getDocs(collection(db, "visitTypes"));
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${data.name}</td>
+            <td>${data.duration}</td>
+            <td>${data.price != null ? data.price.toFixed(2) : '-'}</td>
+          `;
+          tableBody.append(tr);
+        });
+      } catch (e) {
+        console.error("Błąd ładowania cennika:", e);
+      }
+    }
+
+    loadPriceList();
+  </script>
+</body>
+</html>
