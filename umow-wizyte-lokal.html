@@ -72,7 +72,7 @@
       <input type="text" id="datePicker" placeholder="Wybierz datę" readonly />
     </div>
     <div id="timeslots" class="timeslots-container"></div>
-
+    <p id="profile-error" class="help-text" style="display:none; color:#d8000c;"></p>
     <div id="booking-details" class="booking-details">
       <h3>Uzupełnij szczegóły wizyty</h3>
       <label for="pet-select">Wybierz zwierzaka</label>
@@ -118,6 +118,7 @@
       where,
       addDoc,
       doc,
+      getDoc,
       setDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
@@ -176,6 +177,11 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
     let currentUserUid = "";
+    async function isProfileComplete(uid) {
+  const uSnap = await getDoc(doc(db, 'users', uid));
+  const uData = uSnap.data() || {};
+  return !!(uData.firstName && uData.lastName && uData.phone && uData.address);
+}
 
     onAuthStateChanged(auth, async user => {
       if (!user) {
@@ -360,6 +366,17 @@ selDate = `${yyyy}-${mm}-${dd}`; // zapamiętujemy w formacie YYYY-MM-DD
       } else {
         btn.textContent = t;
         btn.onclick = async () => {
+
+           document.getElementById('profile-error').style.display = 'none';
+
+  // 1) sprawdź profil
+  const complete = await isProfileComplete(currentUserUid);
+  if (!complete) {
+    const err = document.getElementById('profile-error');
+    err.textContent = 'Aby umówić wizytę, prosimy najpierw uzupełnić dane w profilu.';
+    err.style.display = 'block';
+    return;  // przerywamy — nie pokazujemy booking-details
+  }
   // 1) zaznacz slot
   document.querySelectorAll('.timeslot-button.selected')
     .forEach(x => x.classList.remove('selected'));
