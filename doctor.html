@@ -66,6 +66,21 @@
   </table>
 </section>
 
+    <section id="client-info" class="hidden">
+    <h3>Dane pacjenta</h3>
+    <div id="history-contact">
+      <!-- Imię/nazwisko, email, telefon, adres -->
+    </div>
+  </section>
+
+  <section id="pet-info" class="hidden">
+    <h3>Dane zwierzaka</h3>
+    <ul id="history-pets">
+      <!-- Lista: imię (gatunek), wiek, waga, płeć -->
+    </ul>
+  </section>
+    
+
     <section id="appointment-history" class="hidden">
   <h3>Historia wizyt klienta: <span id="history-email-label"></span></h3>
   <h4>Przyszłe wizyty</h4>
@@ -271,11 +286,38 @@ await loadClients();
       
       async function loadHistoryForUser(userId) {
   // pokaż i ustaw nagłówek
+  document.getElementById("client-info").classList.remove("hidden");
+  document.getElementById("pet-info").classList.remove("hidden");
   historySection.classList.remove("hidden");
   const userDoc = await getDoc(doc(db,"users",userId));
   const email   = userDoc.data()?.email || "<brak>";
+  const uData     = userDoc.data() || {};
+  const fullName  = [uData.firstName, uData.lastName].filter(Boolean).join(" ");
+  const phone     = uData.phone || "<brak>";
+  const address   = uData.address || "<brak>";
   historyEmailLabel.textContent = email;
 
+// Wstaw kontakt
+  document.getElementById("history-contact").innerHTML = `
+    <p><strong>Imię i nazwisko:</strong> ${fullName}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Telefon:</strong> ${phone}</p>
+    <p><strong>Adres:</strong> ${address}</p>
+  `;
+
+  // 2) Pobierz zwierzaki klienta
+  const petsSnap = await getDocs(collection(db, "users", userId, "pets"));
+  const petsList = document.getElementById("history-pets");
+  petsList.innerHTML = "";
+  petsSnap.forEach(docSnap => {
+    const p = docSnap.data();
+    const li = document.createElement("li");
+    li.textContent = 
+      `${p.name} (${p.species}), wiek: ${p.age || "-"}, ` +
+      `waga: ${p.weight || "-"}kg, płeć: ${p.gender || "-"}`;
+    petsList.append(li);
+  });
+        
   // wczytaj wszystkie wizyty danego klienta u tego lekarza
   const snap = await getDocs(
     query(
