@@ -190,6 +190,9 @@
   const futureBody        = document.querySelector("#future-table tbody");
   const pastBody          = document.querySelector("#past-table tbody");
   const historyStatus     = document.getElementById("history-status");
+      // wewnątrz loadAppointments()
+const today = new Date().toISOString().slice(0,10); // "YYYY-MM-DD"
+
       async function loadAppointments() {
   tableBody.innerHTML = "";
   statusP.textContent = "";
@@ -215,6 +218,7 @@ tableBody.addEventListener("click", async e => {
   // 1) Pobierz posortowane wizyty
   const q    = query(
     bookingsRef,
+    where("date", ">=", today),
     orderBy("date", "asc"),
     orderBy("hour", "asc")
   );
